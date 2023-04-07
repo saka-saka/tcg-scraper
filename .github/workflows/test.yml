@@ -26,9 +26,13 @@ jobs:
       # https://twitter.com/jonhoo/status/1571290371124260865
       - name: cargo test --locked
         run: cargo test --locked --all-features --all-targets
+        env:
+          SQLX_OFFLINE: true
       # https://github.com/rust-lang/cargo/issues/6669
       - name: cargo test --doc
         run: cargo test --locked --all-features --doc
+        env:
+          SQLX_OFFLINE: true
   minimal:
     runs-on: ubuntu-latest
     name: ubuntu / stable / minimal-versions
@@ -46,6 +50,8 @@ jobs:
         run: cargo +nightly update -Zminimal-versions
       - name: cargo test
         run: cargo test --locked --all-features --all-targets
+        env:
+          SQLX_OFFLINE: true
   os-check:
     runs-on: ${{ matrix.os }}
     name: ${{ matrix.os }} / stable
@@ -64,6 +70,8 @@ jobs:
         run: cargo generate-lockfile
       - name: cargo test
         run: cargo test --locked --all-features --all-targets
+        env:
+          SQLX_OFFLINE: true
   coverage:
     runs-on: ubuntu-latest
     name: ubuntu / stable / coverage
