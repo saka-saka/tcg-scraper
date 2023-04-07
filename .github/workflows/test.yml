@@ -90,6 +90,8 @@ jobs:
         run: cargo generate-lockfile
       - name: cargo llvm-cov
         run: cargo llvm-cov --locked --all-features --lcov --output-path lcov.info
+        env:
+          SQLX_OFFLINE: true
       - name: Upload to codecov.io
         uses: codecov/codecov-action@v3
         with:
