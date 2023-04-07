@@ -1,0 +1,172 @@
+{
+  "db": "PostgreSQL",
+  "23d3750379ea19473343c94a395c48ed4771f9a32b541938920468199f48e418": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text",
+          "Text",
+          "Int4"
+        ]
+      }
+    },
+    "query": "INSERT INTO bigweb_pokemon_cardset(id, cardset_name, ref, updated_at, item_count)\n            VALUES($1, $2, $3, NOW(), $4)\n            ON CONFLICT(id)\n            DO UPDATE SET cardset_name = $2, ref = $3, updated_at = NOW(), item_count = $4"
+  },
+  "8a6034da110ee2df044d01da1f4f82df0be1b601e7dc02d4a15e2fb5ff86698b": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "name",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "number",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "rarity",
+          "ordinal": 3,
+          "type_info": "Text"
+        },
+        {
+          "name": "sale_price",
+          "ordinal": 4,
+          "type_info": "Int4"
+        },
+        {
+          "name": "cardset_name",
+          "ordinal": 5,
+          "type_info": "Text"
+        },
+        {
+          "name": "cardset_ref",
+          "ordinal": 6,
+          "type_info": "Text"
+        },
+        {
+          "name": "set_id",
+          "ordinal": 7,
+          "type_info": "Text"
+        },
+        {
+          "name": "last_fetched_at",
+          "ordinal": 8,
+          "type_info": "Timestamptz"
+        },
+        {
+          "name": "remark",
+          "ordinal": 9,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        false,
+        true,
+        true
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "SELECT bpc.id, name, number, rarity, sale_price, bpcs.cardset_name, bpcs.ref as cardset_ref, set_id, last_fetched_at, remark\n            FROM bigweb_pokemon_card bpc\n            LEFT JOIN bigweb_pokemon_cardset bpcs\n            ON bpc.set_id = bpcs.id"
+  },
+  "95ed89e75b0406b934e9410b499a4f4c03656eb1226df3374525c8e611845f86": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "UPDATE bigweb_pokemon_cardset\n            SET is_sync = true, updated_at = NOW()\n            WHERE id = $1"
+  },
+  "c135441fbf4d3b2409f18fd592c118c0cc70903a649152b80f7ad4c6119a6f42": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Bool"
+        ]
+      }
+    },
+    "query": "SELECT id FROM bigweb_pokemon_cardset WHERE is_sync = $1"
+  },
+  "c62948b57881ca17fb1e1aa9b3adcbf7d93c7a08951174f674fcebb521d4e957": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "UPDATE bigweb_pokemon_cardset\n            SET is_sync = false, updated_at = NOW()\n            WHERE id = $1"
+  },
+  "d53d39e8bfa14cb3bc8a3f13397ba7a57cef73a62e221572de9572868bced5ac": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text",
+          "Text",
+          "Text",
+          "Int4",
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "INSERT INTO bigweb_pokemon_card(id, name, number, rarity, sale_price, set_id, remark)\n            VALUES($1, $2, $3, $4, $5, $6, $7)\n            ON CONFLICT(id)\n            DO UPDATE SET name = $2, number = $3, rarity = $4, sale_price = $5, set_id = $6, remark = $7"
+  },
+  "e489daa76f72e7fd2e121bbb94aed0f81c8ba41b38bf8a6c42acd40e5e52ff19": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "SELECT id FROM bigweb_pokemon_cardset WHERE ref = $1"
+  }
+}

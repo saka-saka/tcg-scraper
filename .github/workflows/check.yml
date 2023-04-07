@@ -2,7 +2,7 @@ permissions:
   contents: read
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
 name: check
 jobs:
@@ -42,6 +42,8 @@ jobs:
         uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          SQLX_OFFLINE: true
   doc:
     runs-on: ubuntu-latest
     name: nightly / doc
@@ -55,6 +57,7 @@ jobs:
         run: cargo doc --no-deps --all-features
         env:
           RUSTDOCFLAGS: --cfg docsrs
+          SQLX_OFFLINE: true
   hack:
     runs-on: ubuntu-latest
     name: ubuntu / stable / features
@@ -69,13 +72,15 @@ jobs:
       # intentionally no target specifier; see https://github.com/jonhoo/rust-ci-conf/pull/4
       - name: cargo hack
         run: cargo hack --feature-powerset check
+        env:
+          SQLX_OFFLINE: true
   msrv:
     runs-on: ubuntu-latest
     # we use a matrix here just because env can't be used in job names
     # https://docs.github.com/en/actions/learn-github-actions/contexts#context-availability
     strategy:
       matrix:
-        msrv: [1.56.1] # 2021 edition requires 1.56
+        msrv: [1.64.0] # clap requires 1.64.0
     name: ubuntu / ${{ matrix.msrv }}
     steps:
       - uses: actions/checkout@v3
@@ -87,3 +92,5 @@ jobs:
           toolchain: ${{ matrix.msrv }}
       - name: cargo +${{ matrix.msrv }} check
         run: cargo check
+        env:
+          SQLX_OFFLINE: true
