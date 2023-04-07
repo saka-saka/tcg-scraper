@@ -55,6 +55,7 @@ jobs:
         run: cargo doc --no-deps --all-features
         env:
           RUSTDOCFLAGS: --cfg docsrs
+          SQLX_OFFLINE: true
   hack:
     runs-on: ubuntu-latest
     name: ubuntu / stable / features
@@ -69,6 +70,8 @@ jobs:
       # intentionally no target specifier; see https://github.com/jonhoo/rust-ci-conf/pull/4
       - name: cargo hack
         run: cargo hack --feature-powerset check
+        env:
+          SQLX_OFFLINE: true
   msrv:
     runs-on: ubuntu-latest
     # we use a matrix here just because env can't be used in job names
@@ -87,3 +90,5 @@ jobs:
           toolchain: ${{ matrix.msrv }}
       - name: cargo +${{ matrix.msrv }} check
         run: cargo check
+        env:
+          SQLX_OFFLINE: true
