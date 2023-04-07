@@ -1,0 +1,16 @@
+SPECIAL = { "/" | " " | "." | "-" | "・" | "+" | "♀" | "×" | "!" | "α" | "☆" | "." | "♂" | "│" | "γ" | "β" | "&" | "δ" | "：" | "＋" | "！" | "＆" | "◆" | "＿" | "?" | "？" | "　" | "_" }
+WHITESPACE = _{ " " | "\t" }
+CJK = { HAN | HIRAGANA | KATAKANA | HANGUL | BOPOMOFO | "ー" | "―" }
+CJK_ALPHANUMERIC = { CJK | ASCII_ALPHANUMERIC | SPECIAL }
+
+REF = { CJK_ALPHANUMERIC+ }
+REF_DESC = { "(" ~ CJK_ALPHANUMERIC+ ~ ")" }
+SET_NAME = { (CJK_ALPHANUMERIC | WHITESPACE | "【" | "】")+ }
+CARD_NAME = { (CJK_ALPHANUMERIC | WHITESPACE )+ }
+PROMO = { "【" ~ (CJK_ALPHANUMERIC | "!")+ ~ "】"}
+DESC = { ("【" ~ CJK_ALPHANUMERIC+ ~ "】") | ("[" ~ CJK_ALPHANUMERIC+ ~ "]") | ALTER_ART | TRAINER_NAME | SPECIAL_ART }
+TRAINER_NAME = { "（" ~ CJK_ALPHANUMERIC+ ~ "）"}
+ALTER_ART = { "(" ~ CJK_ALPHANUMERIC+ ~ ")" }
+SPECIAL_ART = { "(" ~ CJK_ALPHANUMERIC+ ~ "）" }
+
+TITLE = { SOI ~ "[" ~ "【" ~ REF ~ REF_DESC? ~ "】" ~ SET_NAME? ~ "]" ~ PROMO? ~ CARD_NAME ~ DESC* ~ EOI }
