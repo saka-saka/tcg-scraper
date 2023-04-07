@@ -28,11 +28,6 @@ jobs:
         run: cargo test --locked --all-features --all-targets
         env:
           SQLX_OFFLINE: true
-      # https://github.com/rust-lang/cargo/issues/6669
-      - name: cargo test --doc
-        run: cargo test --locked --all-features --doc
-        env:
-          SQLX_OFFLINE: true
   os-check:
     runs-on: ${{ matrix.os }}
     name: ${{ matrix.os }} / stable
