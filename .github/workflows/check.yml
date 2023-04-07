@@ -42,6 +42,8 @@ jobs:
         uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          SQLX_OFFLINE: true
   doc:
     runs-on: ubuntu-latest
     name: nightly / doc
