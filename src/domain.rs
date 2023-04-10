@@ -5,8 +5,7 @@ use std::str::FromStr;
 use strum_macros::EnumString;
 use time::macros::format_description;
 
-const BIGWEB_POKEMON_URL: &str =
-    "https://www.bigweb.co.jp/ja/products/%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3/list";
+const BIGWEB_POKEMON_URL: &str = "https://www.bigweb.co.jp/ja/products/pokemon/list";
 
 #[derive(Debug)]
 pub struct Cardset {
@@ -77,7 +76,7 @@ struct QueryParams {
 
 impl CardsetURL {
     pub fn from_cardset_id(id: &str) -> Result<Self, Box<Error>> {
-        let query_str = &format!("cardset={}", id);
+        let query_str = &format!("cardsets={}", id);
         let mut parsed_url =
             url::Url::parse(BIGWEB_POKEMON_URL).map_err(|err| Error::Parse(err.to_string()))?;
         parsed_url.set_query(Some(query_str));
@@ -313,12 +312,24 @@ mod tests {
     }
     #[test]
     fn cardset_url_ok() {
-        let cardset_url = CardsetURL::parse("https://www.bigweb.co.jp/ja/products/%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3/list?cardsets=7615").unwrap();
+        let cardset_url =
+            CardsetURL::parse("https://www.bigweb.co.jp/ja/products/pokemon/list?cardsets=7615")
+                .unwrap();
         assert_eq!(cardset_url.cardset_id(), "7615".to_string());
     }
     #[test]
+    fn cardset_from_id_ok() {
+        let cardset_url = CardsetURL::from_cardset_id("7615").unwrap();
+        assert_eq!(
+            cardset_url.origin_url().to_string(),
+            format!("{}?cardsets=7615", BIGWEB_POKEMON_URL)
+        );
+    }
+    #[test]
     fn card_url_ok() {
-        let card_url = CardURL::parse("https://www.bigweb.co.jp/ja/products/%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3/cardViewer/3275927").unwrap();
+        let card_url =
+            CardURL::parse("https://www.bigweb.co.jp/ja/products/pokemon/cardViewer/3275927")
+                .unwrap();
         assert_eq!(card_url.card_id(), "3275927".to_string());
     }
     #[test]
