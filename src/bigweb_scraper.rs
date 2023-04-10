@@ -6,6 +6,7 @@ use crate::domain::{
 use headless_chrome::{Browser, LaunchOptions};
 use scraper::Selector;
 use std::{num::ParseIntError, thread::sleep, time::Duration};
+use tracing::error;
 
 const BIGWEB_POKEMON_URL: &str =
     "https://www.bigweb.co.jp/ja/products/%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3/list?cardsets=7615";
@@ -124,11 +125,11 @@ impl BigwebScraper {
             .map_err(|e| Error::BrowserBackend(e.to_string()))?;
         tab.wait_until_navigated()
             .map_err(|e| Error::BrowserBackend(e.to_string()))?;
-        let result_count_element = tab
-            .wait_for_element(".product-list")
-            .map_err(|e| Error::BrowserBackend(e.to_string()))?;
         let raw_html = tab
             .get_content()
+            .map_err(|e| Error::BrowserBackend(e.to_string()))?;
+        let result_count_element = tab
+            .wait_for_element(".product-list")
             .map_err(|e| Error::BrowserBackend(e.to_string()))?;
         let mut document = scraper::Html::parse_document(&raw_html);
         let selector =
