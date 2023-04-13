@@ -185,12 +185,6 @@ impl BigwebScraper {
         let mut data = vec![];
         let cardset_url = CardsetURL::parse(url).unwrap();
         for item_box in item_boxes {
-            let selector = Selector::parse(".item-point").unwrap();
-            if let Some(item_point) = item_box.select(&selector).next() {
-                if !item_point.inner_html().replace("<!---->", "").is_empty() {
-                    continue;
-                }
-            }
             let mut builder = BigwebScrappedPokemonCardBuilder::default();
             builder.set_id(cardset_url.cardset_id());
             if let Some(name) = item_box
@@ -207,6 +201,9 @@ impl BigwebScraper {
                         continue;
                     }
                 };
+                if !link_title.is_card() {
+                    continue;
+                }
                 let card_url = CardURL::parse(href).unwrap();
                 builder.id(card_url.card_id());
                 builder.name(link_title.card_name());

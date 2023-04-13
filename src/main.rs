@@ -9,6 +9,7 @@ use clap::{Parser, Subcommand};
 use color_eyre::eyre::Result;
 use dotenvy::dotenv;
 use pokemon_csv::PokemonCSV;
+use tracing::Level;
 
 #[derive(Parser)]
 struct Cli {
@@ -42,7 +43,9 @@ async fn main() -> Result<()> {
     let cli = Cli::parse();
     let database_url = std::env::var("DATABASE_URL")?;
     let application = Application::new(&database_url);
-    tracing_subscriber::fmt::init();
+    tracing_subscriber::fmt()
+        .with_max_level(Level::ERROR)
+        .finish();
 
     match &cli.command {
         Some(Commands::UpdateCard { all, set }) => {

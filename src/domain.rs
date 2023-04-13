@@ -268,6 +268,9 @@ impl LinkTitle {
     pub fn card_name(&self) -> String {
         self.card_name.clone()
     }
+    pub fn is_card(&self) -> bool {
+        !self.card_name.contains("ポケモンカードゲーム")
+    }
     pub fn remark(&self) -> Option<String> {
         let mut s = String::new();
         if let Some(promo) = &self.promo {
@@ -351,5 +354,10 @@ mod tests {
     fn rarity_ok() {
         let rarity = Rarity::from_str("SSR").unwrap();
         assert_eq!(rarity, Rarity::SSR);
+    }
+    #[test]
+    fn is_card_ok() {
+        let link_title = LinkTitle::parse("[【SVAM/SVAL/SVAW】スターターセットex 3種]ポケモンカードゲーム スカーレット＆バイオレット スターターセットex ホゲータ&デンリュウex").unwrap();
+        assert!(!link_title.is_card());
     }
 }
