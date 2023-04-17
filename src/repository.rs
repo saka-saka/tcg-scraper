@@ -1,4 +1,4 @@
-use crate::domain::{BigwebScrappedPokemonCard, Cardset, PokemonCard};
+use crate::domain::{BigwebScrappedPokemonCard, Cardset, PokemonCard, Rarity};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
 
@@ -84,7 +84,12 @@ impl BigwebRepository {
             card.id,
             card.name,
             card.number,
-            card.rarity.clone().map(|r| r.to_string()),
+            card.rarity.clone().map(|r| {
+              match r {
+                Rarity::Unknown(s)=> s,
+                _ => r.to_string()
+              }
+            }),
             card.sale_price.clone().map(|p| p.value() as i32),
             card.set_id,
             card.remark

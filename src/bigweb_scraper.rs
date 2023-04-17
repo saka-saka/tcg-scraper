@@ -1,7 +1,7 @@
 use crate::domain::{
     BigwebScrappedPokemonCard, BigwebScrappedPokemonCardBuilder,
     BigwebScrappedPokemonCardBuilderError, ButtonTitle, CardURL, Cardset, CardsetURL,
-    DescriptionTitle, LinkTitle, Price,
+    DescriptionTitle, LinkTitle, Price, Rarity,
 };
 use headless_chrome::{Browser, LaunchOptions};
 use scraper::Selector;
@@ -226,6 +226,9 @@ impl BigwebScraper {
             match item_box.select(&selector).next() {
                 Some(title) => {
                     let desc_title = DescriptionTitle::parse(&title.inner_html());
+                    if let None = desc_title.rarity() {
+                        builder.rarity(Some(Rarity::Unknown(title.inner_html())));
+                    }
                     builder.rarity(desc_title.rarity());
                 }
                 None => {

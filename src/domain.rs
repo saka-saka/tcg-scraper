@@ -161,6 +161,8 @@ pub enum Rarity {
     C,
     TR,
     TD,
+    #[strum(default)]
+    Unknown(String),
 }
 
 impl DescriptionTitle {
@@ -227,6 +229,7 @@ struct MyParser;
 
 #[derive(Builder, Debug, Default)]
 pub struct LinkTitle {
+    raw: String,
     card_name: String,
     promo: Option<String>,
     description: Option<String>,
@@ -240,6 +243,7 @@ impl LinkTitle {
     pub fn parse(title: &str) -> Result<LinkTitle, Error> {
         let pairs = MyParser::parse(Rule::TITLE, title)?;
         let mut builder = LinkTitleBuilder::default();
+        builder.raw(title.to_string());
         builder.promo(None);
         builder.description(None);
         builder.trainer_name(None);
@@ -269,7 +273,9 @@ impl LinkTitle {
         self.card_name.clone()
     }
     pub fn is_card(&self) -> bool {
-        !self.card_name.contains("ポケモンカードゲーム")
+        let is_pokemon_card_game = self.raw.contains("ポケモンカードゲーム");
+        let is_graded = self.raw.contains("鑑定品");
+        !(is_pokemon_card_game || is_graded)
     }
     pub fn remark(&self) -> Option<String> {
         let mut s = String::new();
@@ -356,8 +362,14 @@ mod tests {
         assert_eq!(rarity, Rarity::SSR);
     }
     #[test]
-    fn is_card_ok() {
+    fn is_card_pokemon_card_game_ok() {
         let link_title = LinkTitle::parse("[【SVAM/SVAL/SVAW】スターターセットex 3種]ポケモンカードゲーム スカーレット＆バイオレット スターターセットex ホゲータ&デンリュウex").unwrap();
+        assert!(!link_title.is_card());
+    }
+    #[test]
+    fn is_card_graded_ok() {
+        let link_title =
+            LinkTitle::parse("[【旧裏プロモ】]ラッキースタジアム【PSA9鑑定品】").unwrap();
         assert!(!link_title.is_card());
     }
 }
