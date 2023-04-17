@@ -1,35 +1,14 @@
 use crate::domain::{
-    BigwebScrappedPokemonCard, BigwebScrappedPokemonCardBuilder,
-    BigwebScrappedPokemonCardBuilderError, ButtonTitle, CardURL, Cardset, CardsetURL,
-    DescriptionTitle, LinkTitle, Price, Rarity,
+    BigwebScrappedPokemonCard, BigwebScrappedPokemonCardBuilder, ButtonTitle, CardURL, Cardset,
+    CardsetURL, DescriptionTitle, LinkTitle, Price, Rarity,
 };
+use crate::scraper_error::{DataError, Error};
 use headless_chrome::{Browser, LaunchOptions};
 use scraper::Selector;
-use std::{num::ParseIntError, thread::sleep, time::Duration};
-use tracing::error;
+use std::{thread::sleep, time::Duration};
 
 const BIGWEB_POKEMON_URL: &str =
     "https://www.bigweb.co.jp/ja/products/%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3/list?cardsets=7615";
-
-#[derive(Debug, thiserror::Error)]
-pub enum Error {
-    #[error("browser backend error {0}")]
-    BrowserBackend(String),
-    #[error("scraper backend error {0}")]
-    ScraperBackend(String),
-    #[error("parse result count error {0}")]
-    ParseResultCount(#[from] ParseIntError),
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum DataError {
-    #[error("data building error {0}")]
-    PokemonCardBuilder(#[from] BigwebScrappedPokemonCardBuilderError),
-    #[error("link title parsing error {0}")]
-    LinkTitleParsing(#[from] crate::domain::Error),
-    #[error("fetch cardset error {0}")]
-    FetchCardSet(String),
-}
 
 pub struct BigwebScraper {
     browser: Browser,

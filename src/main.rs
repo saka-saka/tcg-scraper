@@ -3,6 +3,7 @@ mod bigweb_scraper;
 mod domain;
 mod pokemon_csv;
 mod repository;
+mod scraper_error;
 
 use application::Application;
 use clap::{Parser, Subcommand};

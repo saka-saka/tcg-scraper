@@ -101,7 +101,7 @@ impl Application {
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("bigweb scraper error")]
-    Scraper(#[from] crate::bigweb_scraper::Error),
+    Scraper(#[from] crate::scraper_error::Error),
     #[error("bigweb repository error")]
     Repository(#[from] crate::repository::Error),
     #[error("set is not exist {0}")]
