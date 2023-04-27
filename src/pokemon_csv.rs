@@ -1,4 +1,5 @@
 use crate::domain::PokemonCard;
+use lazy_static::lazy_static;
 use regex::Regex;
 use serde::Serialize;
 
@@ -78,8 +79,10 @@ impl From<PokemonCard> for PokemonCSV {
 
 fn sanitize(s: &str) -> String {
     let s1 = s.replace("【", "").replace("】", "").replace("&amp;", "&");
-    let re = Regex::new("[1-9]種").unwrap();
-    re.replace_all(&s1, "").trim().to_string()
+    lazy_static! {
+        static ref RE: Regex = Regex::new("[1-9]種").unwrap();
+    }
+    RE.replace_all(&s1, "").trim().to_string()
 }
 
 #[cfg(test)]

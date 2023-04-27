@@ -152,6 +152,7 @@ dependencies = [
  "futures",
  "headless_chrome",
  "html-escape",
+ "lazy_static",
  "pest",
  "pest_derive",
  "regex",
