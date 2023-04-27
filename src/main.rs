@@ -2,6 +2,7 @@ mod application;
 mod bigweb_scraper;
 mod domain;
 mod pokemon_csv;
+mod pokemon_trainer_scraper;
 mod repository;
 mod scraper_error;
 
@@ -30,6 +31,7 @@ enum Commands {
         #[arg(short, long)]
         set: Option<String>,
     },
+    PTCGScraper,
     ExportCard {
         #[arg(short, long)]
         all: bool,
@@ -75,6 +77,14 @@ async fn main() -> Result<()> {
                 }
                 wtr.flush()?;
             }
+        }
+        Some(Commands::PTCGScraper) => {
+            application.update_entire_the_ptcg_set().await;
+            // let scraper = pokemon_trainer_scraper::PokemonTrainerSiteScraper::new()?;
+            // scraper
+            //     .fetch_card_by_id("https://asia.pokemon-card.com/tw/card-search/detail/8006/")
+            //     .await;
+            // let psets = scraper.fetch_set().await.unwrap();
         }
         Some(Commands::ResyncAll) => {
             application.unsync_entire_cardset_db().await?;

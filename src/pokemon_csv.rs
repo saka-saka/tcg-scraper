@@ -1,4 +1,5 @@
 use crate::domain::PokemonCard;
+use regex::Regex;
 use serde::Serialize;
 
 #[derive(Debug, Serialize)]
@@ -43,7 +44,7 @@ impl From<PokemonCard> for PokemonCSV {
         PokemonCSV {
             product_id: None,
             brand: Some(String::from("Pokemon")),
-            set: Some(value.set_name),
+            set: Some(sanitize(&value.set_name)),
             edition: None,
             series: None,
             rarity: value.rarity,
@@ -72,5 +73,28 @@ impl From<PokemonCard> for PokemonCSV {
             p_language: None,
             id: None,
         }
+    }
+}
+
+fn sanitize(s: &str) -> String {
+    let s1 = s.replace("【", "").replace("】", "").replace("&amp;", "&");
+    let re = Regex::new("[1-9]種").unwrap();
+    re.replace_all(&s1, "").trim().to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn sanitize_x_kind() {
+        let result = sanitize("バトル強化デッキ 3種");
+        let expected = "バトル強化デッキ".to_string();
+        assert_eq!(result, expected);
+    }
+    #[test]
+    fn sanitize_braces() {
+        let result = sanitize("最強爆流コンボデッキ60【カメックス＋キュレムEX】");
+        let expected = "最強爆流コンボデッキ60カメックス＋キュレムEX".to_string();
+        assert_eq!(result, expected);
     }
 }

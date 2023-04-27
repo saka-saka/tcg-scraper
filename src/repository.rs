@@ -1,4 +1,5 @@
 use crate::domain::{BigwebScrappedPokemonCard, Cardset, PokemonCard, Rarity};
+use crate::pokemon_trainer_scraper::ThePTCGSet;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
 
@@ -119,6 +120,17 @@ impl BigwebRepository {
         .execute(&self.pool)
         .await?;
         Ok(())
+    }
+    pub async fn upsert_the_ptcg_set(&self, set: &ThePTCGSet) {
+        sqlx::query!(
+              "INSERT INTO the_ptcg_set(id, code, series, name, release_date, updated_at)
+              VALUES(gen_random_uuid(), $1, $2, $3, $4, NOW())
+              ON CONFLICT(code)
+              DO UPDATE SET code = $1, series = $2, name = $3, release_date = $4, updated_at = NOW()",
+              set.expansion_code, set.series, set.name, set.release_date)
+        .execute(&self.pool)
+        .await
+        .unwrap();
     }
 }
 

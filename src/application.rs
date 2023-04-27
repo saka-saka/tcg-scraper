@@ -1,9 +1,11 @@
 use crate::bigweb_scraper::BigwebScraper;
 use crate::domain::{CardsetURL, PokemonCard};
+use crate::pokemon_trainer_scraper::PokemonTrainerSiteScraper;
 use crate::repository::BigwebRepository;
 use tracing::{debug, error};
 
 pub struct Application {
+    the_ptcg_scraper: PokemonTrainerSiteScraper,
     bigweb_scraper: BigwebScraper,
     bigweb_repository: BigwebRepository,
 }
@@ -11,8 +13,10 @@ pub struct Application {
 impl Application {
     pub fn new(url: &str) -> Self {
         let bigweb_scraper = BigwebScraper::new().unwrap();
+        let the_ptcg_scraper = PokemonTrainerSiteScraper::new().unwrap();
         let bigweb_repository = BigwebRepository::new(url);
         Self {
+            the_ptcg_scraper,
             bigweb_scraper,
             bigweb_repository,
         }
@@ -95,6 +99,12 @@ impl Application {
             self.bigweb_repository.unsync(&set_id).await?;
         }
         Ok(())
+    }
+    pub async fn update_entire_the_ptcg_set(&self) {
+        let sets = self.the_ptcg_scraper.fetch_set().await.unwrap();
+        for set in sets {
+            self.bigweb_repository.upsert_the_ptcg_set(&set).await;
+        }
     }
 }
 
