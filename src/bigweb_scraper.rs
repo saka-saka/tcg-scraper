@@ -230,4 +230,28 @@ impl BigwebScraper {
         }
         Ok(data)
     }
+    pub fn fetch_pokemon_card_image(&self, id: &str) -> Result<String, Error> {
+        let url = format!(
+            "https://www.bigweb.co.jp/ja/products/pokemon/cardViewer/{}",
+            id
+        );
+        let lock = self.browser.get_tabs().lock().unwrap();
+        let tab = lock.first().unwrap();
+        // let tab = self
+        //     .browser
+        //     .new_tab()
+        //     .map_err(|e| Error::BrowserBackend(e.to_string()))?;
+        tab.navigate_to(&url)
+            .map_err(|e| Error::BrowserBackend(e.to_string()))?;
+        tab.wait_until_navigated()
+            .map_err(|e| Error::BrowserBackend(e.to_string()))?;
+        tab.wait_for_element("div.card_view_one-image-item-box img")
+            .unwrap();
+        let selector = Selector::parse("div.card_view_one-image-item-box img").unwrap();
+        let document = scraper::Html::parse_document(&tab.get_content().unwrap());
+        let elem = document.select(&selector).next().unwrap();
+        let src = elem.value().attr("src").unwrap();
+        drop(lock);
+        Ok(src.to_string())
+    }
 }

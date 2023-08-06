@@ -56,7 +56,7 @@ impl From<PokemonCard> for PokemonCSV {
             card_name_chinese: None,
             card_name_japanese: Some(value.name),
             card_number: value.number,
-            image: None,
+            image: Some(format!("{}.jpg", value.id)),
             value: value.sale_price.map(|p| p.to_string()),
             reference: Some(value.set_ref),
             remark: None,
@@ -78,7 +78,7 @@ impl From<PokemonCard> for PokemonCSV {
 }
 
 fn sanitize(s: &str) -> String {
-    let s1 = s.replace("【", "").replace("】", "").replace("&amp;", "&");
+    let s1 = s.replace('【', "").replace('】', "").replace("&amp;", "&");
     lazy_static! {
         static ref RE: Regex = Regex::new("[1-9]種").unwrap();
     }

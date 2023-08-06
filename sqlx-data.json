@@ -1,6 +1,189 @@
 {
   "db": "PostgreSQL",
-  "23d3750379ea19473343c94a395c48ed4771f9a32b541938920468199f48e418": {
+  "1c5772d8c15ac29154ef6608fbec911da94e13a0188fc008a6e898059126ac00": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "SELECT id FROM bigweb_pokemon_expansion WHERE code = $1"
+  },
+  "22559e4621c9045e4590144d1d37e4fd16f039cd6f1bc74baff7408cb235c210": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid"
+        ]
+      }
+    },
+    "query": "UPDATE bigweb_pokemon_printing SET image_downloaded = true WHERE id = $1"
+  },
+  "2f2b921c851057572720993cd2813a29207c715170fa2e804cccac51936df3e5": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Bool"
+        ]
+      }
+    },
+    "query": "SELECT id FROM bigweb_pokemon_expansion WHERE is_sync = $1"
+  },
+  "3cf82b06e975f3e26da4f644e834777431f756cd549d9a00c6450a56a0cc1dc1": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Text",
+          "Text",
+          "Int4"
+        ]
+      }
+    },
+    "query": "INSERT INTO bigweb_pokemon_expansion(id, name, code, updated_at, item_count)\n            VALUES($1, $2, $3, NOW(), $4)\n            ON CONFLICT(id)\n            DO UPDATE SET name = $2, code = $3, updated_at = NOW(), item_count = $4"
+  },
+  "4a4b718714751c7e31190c2f11107b6639743c1e40bcae2504842e04397bbd04": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "UPDATE pokemon_trainer_fetchable_card SET fetched = True WHERE code = $1"
+  },
+  "5b4f4d2cff49456dfa0dedc56d741308b378ce0719ff22661f4456308866147b": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "UPDATE pokemon_trainer_printing SET rarity = $1 WHERE code = $2"
+  },
+  "5f9df77fab0259561e778a1e46ba5b40f975dd797420e3e72a31a1028a1e65af": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Text",
+          "Text",
+          "Text",
+          "Int4",
+          "Uuid",
+          "Text"
+        ]
+      }
+    },
+    "query": "INSERT INTO bigweb_pokemon_printing(id, name, number, rarity, sale_price, expansion_id, remark)\n            VALUES($1, $2, $3, $4, $5, $6, $7)\n            ON CONFLICT(id)\n            DO UPDATE SET name = $2, number = $3, rarity = $4, sale_price = $5, expansion_id = $6, remark = $7"
+  },
+  "6d9b87101055ad229d236b25752fd942cb87ef235a10d267ef7c44b630173326": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "SELECT id\n            FROM bigweb_pokemon_printing\n            WHERE image_downloaded = false"
+  },
+  "8136c52ef7ae2b79dd0ca591b2dc51ce2ebb8183812914df5679f88474eeccb0": {
+    "describe": {
+      "columns": [
+        {
+          "name": "code",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "expansion_code",
+          "ordinal": 1,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "SELECT code, expansion_code FROM pokemon_trainer_fetchable_card WHERE fetched = False LIMIT 10"
+  },
+  "8b0469b702aa04788533df242a14675abbc4cf481deb1ead6b13c3e17a6cb68f": {
+    "describe": {
+      "columns": [
+        {
+          "name": "code",
+          "ordinal": 0,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "SELECT code FROM pokemon_trainer_expansion"
+  },
+  "90a1c988d1841c9811f39f7f3a024f5b99bccf2507ad1d0fa12ff46a6cd93f0c": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "INSERT INTO pokemon_trainer_fetchable_card(code, fetched, expansion_code) VALUES($1, False, $2)\n                ON CONFLICT(code)\n                DO UPDATE\n                    SET code = $1, fetched = False, expansion_code = $2"
+  },
+  "a8f44e07dfae68e516a84a18fcf75e15844302b3ffb91cdaf48ec6c1f2960dda": {
     "describe": {
       "columns": [],
       "nullable": [],
@@ -9,19 +192,20 @@
           "Text",
           "Text",
           "Text",
-          "Int4"
+          "Text",
+          "Text"
         ]
       }
     },
-    "query": "INSERT INTO bigweb_pokemon_cardset(id, cardset_name, ref, updated_at, item_count)\n            VALUES($1, $2, $3, NOW(), $4)\n            ON CONFLICT(id)\n            DO UPDATE SET cardset_name = $2, ref = $3, updated_at = NOW(), item_count = $4"
+    "query": "\n                   INSERT INTO pokemon_trainer_printing(code, kind, name, number, expansion_code)\n                   VALUES($1, $2, $3, $4, $5)\n                   ON CONFLICT(code)\n                   DO UPDATE\n                   SET kind = $2, name = $3, number = $4, expansion_code = $5\n                   "
   },
-  "8a6034da110ee2df044d01da1f4f82df0be1b601e7dc02d4a15e2fb5ff86698b": {
+  "ac2f8b342765a14db2632b4e3bba29edd41faa8352cc9f0bfb09072e5cf77a50": {
     "describe": {
       "columns": [
         {
           "name": "id",
           "ordinal": 0,
-          "type_info": "Text"
+          "type_info": "Uuid"
         },
         {
           "name": "name",
@@ -54,9 +238,9 @@
           "type_info": "Text"
         },
         {
-          "name": "set_id",
+          "name": "expansion_id",
           "ordinal": 7,
-          "type_info": "Text"
+          "type_info": "Uuid"
         },
         {
           "name": "last_fetched_at",
@@ -85,53 +269,33 @@
         "Left": []
       }
     },
-    "query": "SELECT bpc.id, name, number, rarity, sale_price, bpcs.cardset_name, bpcs.ref as cardset_ref, set_id, last_fetched_at, remark\n            FROM bigweb_pokemon_card bpc\n            LEFT JOIN bigweb_pokemon_cardset bpcs\n            ON bpc.set_id = bpcs.id"
+    "query": "SELECT\n                bpc.id,\n                bpc.name,\n                number,\n                rarity,\n                sale_price,\n                bpcs.name cardset_name,\n                bpcs.code as cardset_ref,\n                expansion_id,\n                last_fetched_at,\n                remark\n            FROM bigweb_pokemon_printing bpc\n            LEFT JOIN bigweb_pokemon_expansion bpcs\n            ON bpc.expansion_id = bpcs.id"
   },
-  "95ed89e75b0406b934e9410b499a4f4c03656eb1226df3374525c8e611845f86": {
+  "cf51e32f4ea3398544dfd32e058349ad75fbf870b557e71be4ce7b1dab96d5f8": {
     "describe": {
       "columns": [],
       "nullable": [],
       "parameters": {
         "Left": [
-          "Text"
+          "Uuid"
         ]
       }
     },
-    "query": "UPDATE bigweb_pokemon_cardset\n            SET is_sync = true, updated_at = NOW()\n            WHERE id = $1"
+    "query": "UPDATE bigweb_pokemon_expansion\n            SET is_sync = false, updated_at = NOW()\n            WHERE id = $1"
   },
-  "c135441fbf4d3b2409f18fd592c118c0cc70903a649152b80f7ad4c6119a6f42": {
-    "describe": {
-      "columns": [
-        {
-          "name": "id",
-          "ordinal": 0,
-          "type_info": "Text"
-        }
-      ],
-      "nullable": [
-        false
-      ],
-      "parameters": {
-        "Left": [
-          "Bool"
-        ]
-      }
-    },
-    "query": "SELECT id FROM bigweb_pokemon_cardset WHERE is_sync = $1"
-  },
-  "c62948b57881ca17fb1e1aa9b3adcbf7d93c7a08951174f674fcebb521d4e957": {
+  "d91586a91e6794c68b4c08167a7269ea4077e7b986ad8e1794a29d699e6ed3cc": {
     "describe": {
       "columns": [],
       "nullable": [],
       "parameters": {
         "Left": [
-          "Text"
+          "Uuid"
         ]
       }
     },
-    "query": "UPDATE bigweb_pokemon_cardset\n            SET is_sync = false, updated_at = NOW()\n            WHERE id = $1"
+    "query": "UPDATE bigweb_pokemon_expansion\n            SET is_sync = true, updated_at = NOW()\n            WHERE id = $1"
   },
-  "d53d39e8bfa14cb3bc8a3f13397ba7a57cef73a62e221572de9572868bced5ac": {
+  "e35b140678e8ff59ca3f255ee044172b69475bec3ef3b98fac41515386eed649": {
     "describe": {
       "columns": [],
       "nullable": [],
@@ -140,33 +304,10 @@
           "Text",
           "Text",
           "Text",
-          "Text",
-          "Int4",
-          "Text",
           "Text"
         ]
       }
     },
-    "query": "INSERT INTO bigweb_pokemon_card(id, name, number, rarity, sale_price, set_id, remark)\n            VALUES($1, $2, $3, $4, $5, $6, $7)\n            ON CONFLICT(id)\n            DO UPDATE SET name = $2, number = $3, rarity = $4, sale_price = $5, set_id = $6, remark = $7"
-  },
-  "e489daa76f72e7fd2e121bbb94aed0f81c8ba41b38bf8a6c42acd40e5e52ff19": {
-    "describe": {
-      "columns": [
-        {
-          "name": "id",
-          "ordinal": 0,
-          "type_info": "Text"
-        }
-      ],
-      "nullable": [
-        false
-      ],
-      "parameters": {
-        "Left": [
-          "Text"
-        ]
-      }
-    },
-    "query": "SELECT id FROM bigweb_pokemon_cardset WHERE ref = $1"
+    "query": "INSERT INTO pokemon_trainer_expansion(id, code, series, name, release_date, updated_at)\n              VALUES(gen_random_uuid(), $1, $2, $3, $4, NOW())\n              ON CONFLICT(code)\n              DO UPDATE SET code = $1, series = $2, name = $3, release_date = $4, updated_at = NOW()"
   }
 }

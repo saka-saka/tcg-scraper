@@ -1,4 +1,6 @@
 use crate::domain::BigwebScrappedPokemonCardBuilderError;
+use crate::pokemon_trainer_scraper::ThePTCGCardBuilderError;
+use fantoccini::error::{CmdError, NewSessionError};
 use std::num::ParseIntError;
 
 #[derive(Debug, thiserror::Error)]
@@ -9,6 +11,12 @@ pub enum Error {
     ScraperBackend(String),
     #[error("parse result count error {0}")]
     ParseResultCount(#[from] ParseIntError),
+    #[error("ThePTCGCardBuilderError")]
+    ThePTCGCardBuilderError(#[from] ThePTCGCardBuilderError),
+    #[error("NewSessionError")]
+    NewSessionError(#[from] NewSessionError),
+    #[error("CmdError")]
+    CmdError(#[from] CmdError),
 }
 
 #[derive(Debug, thiserror::Error)]

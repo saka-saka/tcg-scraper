@@ -137,7 +137,9 @@ pub enum Error {
 pub struct DescriptionTitle(Option<Rarity>);
 
 #[allow(clippy::upper_case_acronyms)]
-#[derive(EnumString, strum_macros::Display, Clone, Debug, PartialEq, Default)]
+#[derive(
+    EnumString, strum_macros::Display, Clone, Debug, PartialEq, Default, strum_macros::EnumIter,
+)]
 pub enum Rarity {
     #[default]
     UR,

@@ -1,6 +1,6 @@
-use crate::scraper_error::Error;
+use crate::{domain::Rarity, scraper_error::Error};
 use derive_builder::Builder;
-use fantoccini::{wd::Capabilities, ClientBuilder, Locator};
+use fantoccini::{wd::Capabilities, Client, ClientBuilder, Locator};
 use scraper::{ElementRef, Selector};
 
 const POKEMON_TRAINER_SITE_URL_BASE: &str = "https://asia.pokemon-card.com";
@@ -15,7 +15,7 @@ pub struct ThePTCGSet {
 
 #[derive(Debug, Builder)]
 pub struct ThePTCGCard {
-    pub id: String,
+    pub code: String,
     pub kind: String,
     pub evolve_marker: Option<String>,
     pub name: String,
@@ -29,6 +29,7 @@ pub struct ThePTCGCard {
     pub energy: Option<String>,
     pub number: Option<String>,
     pub artist: String,
+    pub set_code: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -39,15 +40,12 @@ pub struct Skill {
     effect: String,
 }
 
-pub struct PokemonTrainerSiteScraper {}
+pub struct PokemonTrainerSiteScraper {
+    client: Client,
+}
 
 impl PokemonTrainerSiteScraper {
-    pub fn new() -> Result<Self, Error> {
-        Ok(Self {})
-    }
-    pub async fn fetch_set(&self) -> Result<Vec<ThePTCGSet>, Error> {
-        let mut site_url = format!("{}/tw/card-search", POKEMON_TRAINER_SITE_URL_BASE);
-
+    pub async fn new() -> Result<Self, Error> {
         let mut cap = Capabilities::new();
         cap.insert(
             "moz:firefoxOptions".to_string(),
@@ -58,15 +56,19 @@ impl PokemonTrainerSiteScraper {
             .connect("http://localhost:4444")
             .await
             .unwrap();
+        Ok(Self { client })
+    }
+    pub async fn fetch_expansion(&self) -> Result<Vec<ThePTCGSet>, Error> {
+        let mut site_url = format!("{}/tw/card-search", POKEMON_TRAINER_SITE_URL_BASE);
         let mut psets = vec![];
         loop {
-            client.goto(&site_url).await.unwrap();
-            client
+            self.client.goto(&site_url).await.unwrap();
+            self.client
                 .wait()
                 .for_element(Locator::Css(".expansionList"))
                 .await
                 .unwrap();
-            let source = client.source().await.unwrap();
+            let source = self.client.source().await.unwrap();
             let document = scraper::Html::parse_document(&source);
             let expansion_link_selector = &Selector::parse(".expansionLink")
                 .map_err(|e| Error::ScraperBackend(e.to_string()))?;
@@ -75,7 +77,7 @@ impl PokemonTrainerSiteScraper {
                     .value()
                     .attr("href")
                     .unwrap()
-                    .split_once("=")
+                    .split_once('=')
                     .unwrap()
                     .1;
                 let series_selector = &Selector::parse(".series").unwrap();
@@ -104,25 +106,42 @@ impl PokemonTrainerSiteScraper {
 
         Ok(psets)
     }
-    pub fn get_fetchables_by_set(&self, set_code: &str) {}
-    pub async fn fetch_card_by_id(&self, card_url: &str) {
-        let mut cap = Capabilities::new();
-        cap.insert(
-            "moz:firefoxOptions".to_string(),
-            serde_json::json!({"args": ["--headless"]}),
-        );
-        let client = ClientBuilder::native()
-            .capabilities(cap)
-            .connect("http://localhost:4444")
-            .await
-            .unwrap();
-        client.goto(card_url).await.unwrap();
-        client
+    pub async fn get_fetchables_by_set(&self, set_code: &str) -> Result<Vec<String>, Error> {
+        let mut set_url =
+            format!("https://asia.pokemon-card.com/tw/card-search/list/?expansionCodes={set_code}");
+        let mut card_codes = vec![];
+        loop {
+            self.client.goto(&set_url).await.unwrap();
+            self.client
+                .wait()
+                .for_element(Locator::Css(".list"))
+                .await?;
+            let source = self.client.source().await?;
+            let document = scraper::Html::parse_document(&source);
+            let card_selector =
+                &Selector::parse(".card a").map_err(|e| Error::ScraperBackend(e.to_string()))?;
+            for card_elem in document.select(card_selector) {
+                let mut href = card_elem.value().attr("href").unwrap().to_string();
+                href.pop();
+                let (_, code) = href.rsplit_once('/').unwrap();
+                card_codes.push(code.to_string());
+            }
+            let next_selector = &Selector::parse(".paginationItem.next a")
+                .map_err(|e| Error::ScraperBackend(e.to_string()))?;
+            match document.select(next_selector).next() {
+                Some(e) => set_url = e.value().attr("href").unwrap().to_string(),
+                None => break,
+            }
+        }
+        Ok(card_codes)
+    }
+    pub async fn fetch_printing_detail(&self, card_url: &str) -> Result<ThePTCGCard, Error> {
+        self.client.goto(card_url).await?;
+        self.client
             .wait()
             .for_element(Locator::Css(".cardDetailPage"))
-            .await
-            .unwrap();
-        let source = client.source().await.unwrap();
+            .await?;
+        let source = self.client.source().await.unwrap();
         let mut card_builder = ThePTCGCardBuilder::default();
         let document = scraper::Html::parse_document(&source);
         let common_header =
@@ -193,9 +212,63 @@ impl PokemonTrainerSiteScraper {
         card_builder.number(collector_number);
         let artist = get_first_elem_inner_html(".illustrator a", document.root_element()).unwrap();
         card_builder.artist(artist);
-        card_builder.id(card_url.to_string());
-        let card = card_builder.build().unwrap();
-        println!("{:#?}", card);
+        let mut card_url = card_url.to_string();
+        card_url.pop();
+        let (_, code) = card_url.rsplit_once('/').unwrap();
+        card_builder.code(code.to_string());
+        card_builder.set_code(None);
+        let card = card_builder.build()?;
+        Ok(card)
+    }
+    pub async fn rarity_ids(&self, rarity: &Rarity) -> Result<Vec<String>, Error> {
+        let rarity = match rarity {
+            Rarity::C => 1,
+            Rarity::U => 2,
+            Rarity::R => 3,
+            Rarity::RR => 4,
+            Rarity::RRR => 5,
+            Rarity::PR => 6,
+            Rarity::TR => 7,
+            Rarity::SR => 8,
+            Rarity::HR => 9,
+            Rarity::UR => 10,
+            Rarity::K => 12,
+            Rarity::A => 13,
+            Rarity::AR => 14,
+            Rarity::SAR => 15,
+            Rarity::Unknown(_) => 11,
+            _ => 0,
+        };
+        let mut ids = vec![];
+        let mut page_num = 1;
+        loop {
+            let url = format!("https://asia.pokemon-card.com/tw/card-search/list/?pageNo={}&sortCondition=&keyword=&cardType=all&regulation=all&pokemonEnergy=&pokemonWeakness=&pokemonResistance=&pokemonMoveEnergy=&hpLowerLimit=none&hpUpperLimit=none&retreatCostLowerLimit=0&retreatCostUpperLimit=none&rarity%5B0%5D={}&illustratorName=&expansionCodes=", page_num, rarity);
+            self.client.goto(&url).await?;
+            self.client
+                .wait()
+                .for_element(Locator::Css(".cardList .list"))
+                .await?;
+            let source = self.client.source().await?;
+            let document = scraper::Html::parse_document(&source);
+            let selector = &Selector::parse("#noResult").unwrap();
+            let selection = document.select(selector);
+            let count = selection.count();
+            println!("{count}");
+            if count != 0 {
+                break;
+            }
+            let selector = &Selector::parse(".cardList .list .card a").unwrap();
+            let selection = document.select(selector);
+            for a in selection {
+                let href = a.value().attr("href").unwrap();
+                let mut href = href.to_owned();
+                href.pop();
+                let (_, cardid) = href.rsplit_once('/').unwrap();
+                ids.push(cardid.to_string());
+            }
+            page_num += 1;
+        }
+        Ok(ids)
     }
 }
 
