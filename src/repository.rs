@@ -1,7 +1,11 @@
+use std::pin::Pin;
+
 use crate::domain::{BigwebScrappedPokemonCard, Cardset, PokemonCard, Rarity};
 use crate::pokemon_trainer_scraper::{ThePTCGCard, ThePTCGSet};
+use crate::yugioh_scraper::YugiohPrinting;
+use futures::{Stream, StreamExt};
 use sqlx::postgres::PgPoolOptions;
-use sqlx::{Pool, Postgres};
+use sqlx::{Pool, Postgres, Transaction};
 
 pub struct Repository {
     pool: Pool<Postgres>,
@@ -264,10 +268,131 @@ impl Repository {
             .unwrap();
         }
     }
+    pub async fn upsert_yugioh_expansion_link(&self, url: &str) {
+        sqlx::query!(
+            "INSERT INTO yugioh_expansion_link(url) VALUES($1) ON CONFLICT(url) DO NOTHING",
+            url
+        )
+        .execute(&self.pool)
+        .await
+        .unwrap();
+    }
+    pub async fn get_yugioh_expansion_link(&self) -> Option<ExpansionLink> {
+        let mut conn = self.pool.begin().await.unwrap();
+        let link = sqlx::query!(
+            "
+            SELECT url FROM yugioh_expansion_link
+            LIMIT 1 FOR UPDATE SKIP LOCKED
+            "
+        )
+        .fetch_optional(&mut conn)
+        .await
+        .unwrap();
+        link.map(|link| ExpansionLink {
+            conn,
+            url: link.url,
+        })
+    }
+    pub async fn get_yugioh_printing_link(&self) -> Option<PrintingLink> {
+        let mut conn = self.pool.begin().await.unwrap();
+        let link =
+            sqlx::query!("SELECT url FROM yugioh_printing_link LIMIT 1 FOR UPDATE SKIP LOCKED")
+                .fetch_optional(&mut conn)
+                .await
+                .unwrap();
+        link.map(|link| PrintingLink {
+            conn,
+            url: link.url,
+        })
+    }
+    pub async fn upsert_yugioh_printing_link(&self, url: &str) {
+        sqlx::query!(
+            "INSERT INTO yugioh_printing_link(url) VALUES($1) ON CONFLICT(url) DO NOTHING",
+            url
+        )
+        .execute(&self.pool)
+        .await
+        .unwrap();
+    }
+    pub async fn upsert_yugioh_printing_detail(&self, detail: YugiohPrinting) {
+        sqlx::query!(
+            "
+            INSERT INTO yugioh_printing_detail(
+            name_jp, name_en, rarity, number, release_date, remark, expansion_name, expansion_code, card_id)
+            VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            ON CONFLICT(card_id, expansion_name, rarity)
+            DO UPDATE
+            SET name_jp = $1, name_en = $2, number = $4, release_date = $5, remark = $6, expansion_code = $7
+            ",
+            detail.name_jp,
+            detail.name_en,
+            detail.rarity,
+            detail.number,
+            detail.release_date,
+            detail.remark,
+            detail.expansion_name,
+            detail.r#ref,
+            detail.card_id
+        )
+        .execute(&self.pool)
+        .await
+        .unwrap();
+    }
+    pub async fn get_yugioh_printing<'a>(&'a self) -> Result<Vec<YugiohPrinting>, Error> {
+        let printings = sqlx::query!("SELECT * FROM yugioh_printing_detail")
+            .fetch_all(&self.pool)
+            .await?
+            .into_iter()
+            .map(|record| YugiohPrinting {
+                card_id: record.card_id,
+                name_jp: record.name_jp,
+                name_en: record.name_en,
+                rarity: record.rarity,
+                number: record.number,
+                release_date: record.release_date,
+                remark: record.remark.unwrap_or(String::from("")),
+                expansion_name: record.expansion_name,
+                r#ref: record.expansion_code,
+            })
+            .collect();
+        Ok(printings)
+    }
 }
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("backend error")]
     BackendError(#[from] sqlx::Error),
+}
+
+pub struct ExpansionLink<'a> {
+    conn: Transaction<'a, Postgres>,
+    pub url: String,
+}
+
+impl<'a> ExpansionLink<'a> {
+    pub async fn done(mut self) {
+        sqlx::query!(
+            "DELETE FROM yugioh_expansion_link WHERE url = $1",
+            &self.url
+        )
+        .execute(&mut self.conn)
+        .await
+        .unwrap();
+        self.conn.commit().await.unwrap();
+    }
+}
+pub struct PrintingLink<'a> {
+    conn: Transaction<'a, Postgres>,
+    pub url: String,
+}
+
+impl<'a> PrintingLink<'a> {
+    pub async fn done(mut self) {
+        sqlx::query!("DELETE FROM yugioh_printing_link WHERE url = $1", &self.url)
+            .execute(&mut self.conn)
+            .await
+            .unwrap();
+        self.conn.commit().await.unwrap();
+    }
 }

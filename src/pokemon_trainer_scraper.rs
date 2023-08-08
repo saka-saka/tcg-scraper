@@ -1,6 +1,6 @@
 use crate::{domain::Rarity, scraper_error::Error};
 use derive_builder::Builder;
-use fantoccini::{wd::Capabilities, Client, ClientBuilder, Locator};
+use fantoccini::{wd::Capabilities, ClientBuilder, Locator};
 use scraper::{ElementRef, Selector};
 
 const POKEMON_TRAINER_SITE_URL_BASE: &str = "https://asia.pokemon-card.com";
@@ -41,34 +41,38 @@ pub struct Skill {
 }
 
 pub struct PokemonTrainerSiteScraper {
-    client: Client,
+    cap: Capabilities,
+    url: String,
 }
 
 impl PokemonTrainerSiteScraper {
-    pub async fn new() -> Result<Self, Error> {
+    pub fn new() -> Self {
         let mut cap = Capabilities::new();
         cap.insert(
             "moz:firefoxOptions".to_string(),
             serde_json::json!({"args": ["--headless"]}),
         );
-        let client = ClientBuilder::native()
-            .capabilities(cap)
-            .connect("http://localhost:4444")
-            .await
-            .unwrap();
-        Ok(Self { client })
+        Self {
+            cap,
+            url: "http://localhost:4444".to_string(),
+        }
     }
     pub async fn fetch_expansion(&self) -> Result<Vec<ThePTCGSet>, Error> {
+        let client = ClientBuilder::native()
+            .capabilities(self.cap.clone())
+            .connect(&self.url)
+            .await
+            .unwrap();
         let mut site_url = format!("{}/tw/card-search", POKEMON_TRAINER_SITE_URL_BASE);
         let mut psets = vec![];
         loop {
-            self.client.goto(&site_url).await.unwrap();
-            self.client
+            client.goto(&site_url).await.unwrap();
+            client
                 .wait()
                 .for_element(Locator::Css(".expansionList"))
                 .await
                 .unwrap();
-            let source = self.client.source().await.unwrap();
+            let source = client.source().await.unwrap();
             let document = scraper::Html::parse_document(&source);
             let expansion_link_selector = &Selector::parse(".expansionLink")
                 .map_err(|e| Error::ScraperBackend(e.to_string()))?;
@@ -107,16 +111,18 @@ impl PokemonTrainerSiteScraper {
         Ok(psets)
     }
     pub async fn get_fetchables_by_set(&self, set_code: &str) -> Result<Vec<String>, Error> {
+        let client = ClientBuilder::native()
+            .capabilities(self.cap.clone())
+            .connect(&self.url)
+            .await
+            .unwrap();
         let mut set_url =
             format!("https://asia.pokemon-card.com/tw/card-search/list/?expansionCodes={set_code}");
         let mut card_codes = vec![];
         loop {
-            self.client.goto(&set_url).await.unwrap();
-            self.client
-                .wait()
-                .for_element(Locator::Css(".list"))
-                .await?;
-            let source = self.client.source().await?;
+            client.goto(&set_url).await.unwrap();
+            client.wait().for_element(Locator::Css(".list")).await?;
+            let source = client.source().await?;
             let document = scraper::Html::parse_document(&source);
             let card_selector =
                 &Selector::parse(".card a").map_err(|e| Error::ScraperBackend(e.to_string()))?;
@@ -136,12 +142,17 @@ impl PokemonTrainerSiteScraper {
         Ok(card_codes)
     }
     pub async fn fetch_printing_detail(&self, card_url: &str) -> Result<ThePTCGCard, Error> {
-        self.client.goto(card_url).await?;
-        self.client
+        let client = ClientBuilder::native()
+            .capabilities(self.cap.clone())
+            .connect(&self.url)
+            .await
+            .unwrap();
+        client.goto(card_url).await?;
+        client
             .wait()
             .for_element(Locator::Css(".cardDetailPage"))
             .await?;
-        let source = self.client.source().await.unwrap();
+        let source = client.source().await.unwrap();
         let mut card_builder = ThePTCGCardBuilder::default();
         let document = scraper::Html::parse_document(&source);
         let common_header =
@@ -241,14 +252,19 @@ impl PokemonTrainerSiteScraper {
         };
         let mut ids = vec![];
         let mut page_num = 1;
+        let client = ClientBuilder::native()
+            .capabilities(self.cap.clone())
+            .connect(&self.url)
+            .await
+            .unwrap();
         loop {
             let url = format!("https://asia.pokemon-card.com/tw/card-search/list/?pageNo={}&sortCondition=&keyword=&cardType=all&regulation=all&pokemonEnergy=&pokemonWeakness=&pokemonResistance=&pokemonMoveEnergy=&hpLowerLimit=none&hpUpperLimit=none&retreatCostLowerLimit=0&retreatCostUpperLimit=none&rarity%5B0%5D={}&illustratorName=&expansionCodes=", page_num, rarity);
-            self.client.goto(&url).await?;
-            self.client
+            client.goto(&url).await?;
+            client
                 .wait()
                 .for_element(Locator::Css(".cardList .list"))
                 .await?;
-            let source = self.client.source().await?;
+            let source = client.source().await?;
             let document = scraper::Html::parse_document(&source);
             let selector = &Selector::parse("#noResult").unwrap();
             let selection = document.select(selector);

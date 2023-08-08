@@ -5,6 +5,10 @@ mod pokemon_csv;
 mod pokemon_trainer_scraper;
 mod repository;
 mod scraper_error;
+mod yugioh_csv;
+mod yugioh_scraper;
+
+use std::{thread::sleep, time::Duration};
 
 use application::Application;
 use clap::{Parser, Subcommand};
@@ -47,7 +51,17 @@ enum Commands {
         #[arg(long)]
         update_rarity: bool,
     },
+    #[command(subcommand)]
+    Yugioh(YugiohCommands),
     ResyncAll,
+}
+
+#[derive(Subcommand)]
+enum YugiohCommands {
+    BuildExpLink,
+    BuildPriLink,
+    BuildDetail,
+    ExportCsv,
 }
 
 #[tokio::main]
@@ -56,7 +70,7 @@ async fn main() -> Result<()> {
     dotenv()?;
     let cli = Cli::parse();
     let database_url = std::env::var("DATABASE_URL")?;
-    let application = Application::new(&database_url).await;
+    let application = Application::new(&database_url);
     tracing_subscriber::fmt()
         .with_max_level(Level::ERROR)
         .finish();
@@ -118,6 +132,30 @@ async fn main() -> Result<()> {
         Some(Commands::ResyncAll) => {
             application.unsync_entire_cardset_db().await?;
             application.update_entire_card_db().await?;
+        }
+        Some(Commands::Yugioh(YugiohCommands::BuildExpLink)) => {
+            application.build_yugioh_expansion_link().await;
+        }
+        Some(Commands::Yugioh(YugiohCommands::BuildPriLink)) => loop {
+            application
+                .build_yugioh_printing_link()
+                .await
+                .expect("ran out of expansion link to build printing link");
+            println!("done wait for 1 secs ...");
+            sleep(Duration::from_secs(1));
+        },
+        Some(Commands::Yugioh(YugiohCommands::BuildDetail)) => loop {
+            let waiting_secs = 1;
+            application
+                .build_yugioh_printing_detail()
+                .await
+                .expect("ran out of printing link");
+            println!("done wait for {waiting_secs} secs ...");
+            sleep(Duration::from_secs(waiting_secs));
+        },
+        Some(Commands::Yugioh(YugiohCommands::ExportCsv)) => {
+            let wtr = std::io::stdout();
+            application.export_yugioh_printing_detail(wtr).await;
         }
         None => {}
     }

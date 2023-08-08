@@ -4,23 +4,28 @@ use crate::bigweb_scraper::BigwebScraper;
 use crate::domain::{CardsetURL, PokemonCard, Rarity};
 use crate::pokemon_trainer_scraper::{PokemonTrainerSiteScraper, ThePTCGSet};
 use crate::repository::Repository;
+use crate::yugioh_csv::YugiohCsv;
+use crate::yugioh_scraper::YugiohScraper;
+use futures::StreamExt;
 use strum::IntoEnumIterator;
 use tracing::{debug, error};
 
 pub struct Application {
     the_ptcg_scraper: PokemonTrainerSiteScraper,
     bigweb_scraper: BigwebScraper,
+    yugioh_scraper: YugiohScraper,
     repository: Repository,
 }
 
 impl Application {
-    pub async fn new(url: &str) -> Self {
+    pub fn new(url: &str) -> Self {
         let bigweb_scraper = BigwebScraper::new().unwrap();
-        let the_ptcg_scraper = PokemonTrainerSiteScraper::new().await.unwrap();
+        let the_ptcg_scraper = PokemonTrainerSiteScraper::new();
         let bigweb_repository = Repository::new(url);
         Self {
             the_ptcg_scraper,
             bigweb_scraper,
+            yugioh_scraper: YugiohScraper::new(),
             repository: bigweb_repository,
         }
     }
@@ -180,6 +185,52 @@ impl Application {
             let ids = self.the_ptcg_scraper.rarity_ids(&rarity).await.unwrap();
             self.repository.update_the_ptcg_rarity(ids, &rarity).await;
         }
+    }
+    pub async fn build_yugioh_expansion_link(&self) {
+        let expansion_links = self.yugioh_scraper.fetch_expansion_link().await.unwrap();
+        for link in expansion_links {
+            self.repository.upsert_yugioh_expansion_link(&link).await;
+        }
+    }
+    pub async fn build_yugioh_printing_link(&self) -> Option<()> {
+        let link = self.repository.get_yugioh_expansion_link().await?;
+        let url = format!(
+            "https://www.db.yugioh-card.com{}&request_locale=ja",
+            link.url
+        );
+        let printing_links = self.yugioh_scraper.fetch_printing_link(&url).await.unwrap();
+        for link in printing_links {
+            self.repository.upsert_yugioh_printing_link(&link).await;
+        }
+        link.done().await;
+        Some(())
+    }
+    pub async fn build_yugioh_printing_detail(&self) -> Option<()> {
+        let link = self.repository.get_yugioh_printing_link().await?;
+        let url = format!(
+            "https://www.db.yugioh-card.com{}&request_locale=ja",
+            link.url
+        );
+        let printings = self
+            .yugioh_scraper
+            .fetch_printing_detail(&url)
+            .await
+            .unwrap();
+        for printing in printings {
+            self.repository
+                .upsert_yugioh_printing_detail(printing)
+                .await
+        }
+        link.done().await;
+        Some(())
+    }
+    pub async fn export_yugioh_printing_detail<W: std::io::Write>(&self, w: W) {
+        let mut wtr = csv::Writer::from_writer(w);
+        for printing in self.repository.get_yugioh_printing().await.unwrap() {
+            let p: YugiohCsv = printing.into();
+            wtr.serialize(p).unwrap();
+        }
+        wtr.flush().unwrap();
     }
 }
 
