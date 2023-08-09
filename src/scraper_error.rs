@@ -12,11 +12,11 @@ pub enum Error {
     #[error("parse result count error {0}")]
     ParseResultCount(#[from] ParseIntError),
     #[error("ThePTCGCardBuilderError")]
-    ThePTCGCardBuilderError(#[from] ThePTCGCardBuilderError),
+    ThePTCGCardBuilder(#[from] ThePTCGCardBuilderError),
     #[error("NewSessionError")]
-    NewSessionError(#[from] NewSessionError),
+    NewSession(#[from] NewSessionError),
     #[error("CmdError")]
-    CmdError(#[from] CmdError),
+    Cmd(#[from] CmdError),
 }
 
 #[derive(Debug, thiserror::Error)]

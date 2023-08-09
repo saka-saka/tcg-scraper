@@ -6,7 +6,6 @@ use crate::pokemon_trainer_scraper::{PokemonTrainerSiteScraper, ThePTCGSet};
 use crate::repository::Repository;
 use crate::yugioh_csv::YugiohCsv;
 use crate::yugioh_scraper::YugiohScraper;
-use futures::StreamExt;
 use strum::IntoEnumIterator;
 use tracing::{debug, error};
 
@@ -48,7 +47,7 @@ impl Application {
                 .open(save_path)
                 .unwrap();
             let bytes = result.bytes().await.unwrap();
-            file.write(&bytes).unwrap();
+            let _ = file.write(&bytes)?;
             self.repository.image_downloaded(&card).await.unwrap();
         }
         Ok(())
@@ -242,4 +241,6 @@ pub enum Error {
     Repository(#[from] crate::repository::Error),
     #[error("set is not exist {0}")]
     SetNotExists(String),
+    #[error("file write error")]
+    FileWrite(#[from] std::io::Error),
 }

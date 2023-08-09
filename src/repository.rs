@@ -1,9 +1,6 @@
-use std::pin::Pin;
-
 use crate::domain::{BigwebScrappedPokemonCard, Cardset, PokemonCard, Rarity};
 use crate::pokemon_trainer_scraper::{ThePTCGCard, ThePTCGSet};
 use crate::yugioh_scraper::YugiohPrinting;
-use futures::{Stream, StreamExt};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres, Transaction};
 
@@ -338,7 +335,7 @@ impl Repository {
         .await
         .unwrap();
     }
-    pub async fn get_yugioh_printing<'a>(&'a self) -> Result<Vec<YugiohPrinting>, Error> {
+    pub async fn get_yugioh_printing(&self) -> Result<Vec<YugiohPrinting>, Error> {
         let printings = sqlx::query!("SELECT * FROM yugioh_printing_detail")
             .fetch_all(&self.pool)
             .await?

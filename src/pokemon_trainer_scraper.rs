@@ -21,7 +21,6 @@ pub struct ThePTCGCard {
     pub name: String,
     pub img_src: Option<String>,
     pub hp: Option<String>,
-    pub skills: Vec<Skill>,
     pub weak_point: Option<String>,
     pub resist: Option<String>,
     pub escape: Option<String>,
@@ -30,14 +29,6 @@ pub struct ThePTCGCard {
     pub number: Option<String>,
     pub artist: String,
     pub set_code: Option<String>,
-}
-
-#[derive(Debug, Clone)]
-pub struct Skill {
-    name: String,
-    cost: String,
-    damage: String,
-    effect: String,
 }
 
 pub struct PokemonTrainerSiteScraper {
@@ -190,25 +181,6 @@ impl PokemonTrainerSiteScraper {
             .map(|s| s.value().attr("src").unwrap().to_owned());
         card_builder.energy(energy);
 
-        let skill_selector = Selector::parse(".skill").unwrap();
-        let skill_elem = document.select(&skill_selector);
-        let mut skills = vec![];
-        for skill in skill_elem {
-            let skill_name = get_first_elem_inner_html(".skillName", skill).unwrap();
-            if !skill_name.is_empty() {
-                let skill_cost = get_first_elem_inner_html(".skillCost", skill).unwrap();
-                let skill_damage = get_first_elem_inner_html(".skillDamage", skill).unwrap();
-                let skill_effect = get_first_elem_inner_html(".skillEffect", skill).unwrap();
-                let skill = Skill {
-                    name: skill_name,
-                    cost: skill_cost,
-                    damage: skill_damage,
-                    effect: skill_effect,
-                };
-                skills.push(skill);
-            }
-        }
-        card_builder.skills(skills);
         let weak_point = get_first_elem_inner_html(".weakpoint", document.root_element());
         card_builder.weak_point(weak_point);
         let resist = get_first_elem_inner_html(".resist", document.root_element());

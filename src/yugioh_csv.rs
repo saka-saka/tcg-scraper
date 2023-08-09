@@ -52,7 +52,7 @@ impl From<YugiohPrinting> for YugiohCsv {
             series: None,
             rarity: value.rarity,
             material: None,
-            release_year: value.release_date.split_once("-").unwrap().0.to_owned(),
+            release_year: value.release_date.split_once('-').unwrap().0.to_owned(),
             language: String::from("JP"),
             card_name_english: value.name_en,
             card_name_chinese: None,

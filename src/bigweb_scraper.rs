@@ -205,7 +205,7 @@ impl BigwebScraper {
             match item_box.select(&selector).next() {
                 Some(title) => {
                     let desc_title = DescriptionTitle::parse(&title.inner_html());
-                    if let None = desc_title.rarity() {
+                    if desc_title.rarity().is_none() {
                         builder.rarity(Some(Rarity::Unknown(title.inner_html())));
                     }
                     builder.rarity(desc_title.rarity());

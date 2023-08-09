@@ -78,7 +78,7 @@ impl From<PokemonCard> for PokemonCSV {
 }
 
 fn sanitize(s: &str) -> String {
-    let s1 = s.replace('【', "").replace('】', "").replace("&amp;", "&");
+    let s1 = s.replace(['【', '】'], "").replace("&amp;", "&");
     lazy_static! {
         static ref RE: Regex = Regex::new("[1-9]種").unwrap();
     }

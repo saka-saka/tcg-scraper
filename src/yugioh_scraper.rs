@@ -85,9 +85,9 @@ impl YugiohScraper {
     }
     pub async fn fetch_printing_detail(&self, link: &str) -> Result<Vec<YugiohPrinting>, Error> {
         let mut builder = YugiohPrintingBuilder::create_empty();
-        let (_, query) = link.split_once("?").ok_or_else(|| Error::CardIdNotExists)?;
-        for qs in query.split("&") {
-            let (key, value) = qs.split_once("=").unwrap();
+        let (_, query) = link.split_once('?').ok_or_else(|| Error::CardIdNotExists)?;
+        for qs in query.split('&') {
+            let (key, value) = qs.split_once('=').unwrap();
             if key == "cid" {
                 builder.card_id(value.to_owned());
             }
@@ -131,10 +131,7 @@ impl YugiohScraper {
                 .last()
                 .map(|f| f.inner_html().trim().to_owned())
                 .unwrap();
-            let (r#ref, number) = match number.split_once("-") {
-                Some(r) => r,
-                None => ("NONE", "000"),
-            };
+            let (r#ref, number) = number.split_once('-').unwrap_or(("NONE", "000"));
             b.r#ref(r#ref.to_owned());
             b.number(format!("{}-{number}", r#ref));
             let expansion_name = elem
