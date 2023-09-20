@@ -5,16 +5,17 @@ mod pokemon_csv;
 mod pokemon_trainer_scraper;
 mod repository;
 mod scraper_error;
+mod ws_csv;
+mod ws_scraper;
 mod yugioh_csv;
 mod yugioh_scraper;
-
-use std::{thread::sleep, time::Duration};
 
 use application::Application;
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::Result;
 use dotenvy::dotenv;
 use pokemon_csv::PokemonCSV;
+use std::{thread::sleep, time::Duration};
 use tracing::Level;
 
 #[derive(Parser)]
@@ -53,7 +54,15 @@ enum Commands {
     },
     #[command(subcommand)]
     Yugioh(YugiohCommands),
+    #[command(subcommand)]
+    Ws(WsCommands),
     ResyncAll,
+}
+
+#[derive(Subcommand)]
+enum WsCommands {
+    Scrape,
+    ExportCsv,
 }
 
 #[derive(Subcommand)]
@@ -156,6 +165,12 @@ async fn main() -> Result<()> {
         Some(Commands::Yugioh(YugiohCommands::ExportCsv)) => {
             let wtr = std::io::stdout();
             application.export_yugioh_printing_detail(wtr).await;
+        }
+        Some(Commands::Ws(WsCommands::Scrape)) => {
+            application.scrape_ws().await;
+        }
+        Some(Commands::Ws(WsCommands::ExportCsv)) => {
+            application.export_ws_csv(std::io::stdout()).await;
         }
         None => {}
     }
