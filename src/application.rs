@@ -2,6 +2,8 @@ use std::io::Write;
 
 use crate::bigweb_scraper::BigwebScraper;
 use crate::domain::{CardsetURL, PokemonCard, Rarity};
+use crate::one_piece_csv::OnePieceCsv;
+use crate::one_piece_scraper::{self, OnePieceScraper};
 use crate::pokemon_trainer_scraper::{PokemonTrainerSiteScraper, ThePTCGSet};
 use crate::repository::Repository;
 use crate::ws_csv::WsCSV;
@@ -17,6 +19,7 @@ pub struct Application {
     yugioh_scraper: YugiohScraper,
     repository: Repository,
     ws_scraper: WsScraper,
+    one_piece_scraper: OnePieceScraper,
 }
 
 impl Application {
@@ -25,12 +28,14 @@ impl Application {
         let the_ptcg_scraper = PokemonTrainerSiteScraper::new();
         let bigweb_repository = Repository::new(url);
         let ws_scraper = WsScraper {};
+        let one_piece_scraper = one_piece_scraper::OnePieceScraper {};
         Self {
             the_ptcg_scraper,
             bigweb_scraper,
             yugioh_scraper: YugiohScraper::new(),
             repository: bigweb_repository,
             ws_scraper,
+            one_piece_scraper,
         }
     }
     pub async fn scrape_ws(&self) {
@@ -251,6 +256,21 @@ impl Application {
         //     let p: YugiohCsv = printing.into();
         //     wtr.serialize(p).unwrap();
         // }
+        wtr.flush().unwrap();
+    }
+    pub async fn scrape_one_piece(&self) {
+        let sets = self.one_piece_scraper.set().await;
+        println!("{:?}", sets);
+    }
+    pub async fn export_one_piece_csv<W: std::io::Write>(&self, w: W) {
+        let sets = self.one_piece_scraper.set().await;
+        let mut wtr = csv::Writer::from_writer(w);
+        for set in sets {
+            for card in self.one_piece_scraper.scrape(&set).await {
+                let c: OnePieceCsv = card.unwrap().into();
+                wtr.serialize(c).unwrap();
+            }
+        }
         wtr.flush().unwrap();
     }
 }

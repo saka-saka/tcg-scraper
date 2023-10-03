@@ -1,6 +1,8 @@
 mod application;
 mod bigweb_scraper;
 mod domain;
+mod one_piece_csv;
+mod one_piece_scraper;
 mod pokemon_csv;
 mod pokemon_trainer_scraper;
 mod repository;
@@ -56,6 +58,8 @@ enum Commands {
     Yugioh(YugiohCommands),
     #[command(subcommand)]
     Ws(WsCommands),
+    #[command(subcommand)]
+    OnePiece(OnePieceCommands),
     ResyncAll,
 }
 
@@ -70,6 +74,12 @@ enum YugiohCommands {
     BuildExpLink,
     BuildPriLink,
     BuildDetail,
+    ExportCsv,
+}
+
+#[derive(Subcommand)]
+enum OnePieceCommands {
+    Scrape,
     ExportCsv,
 }
 
@@ -171,6 +181,13 @@ async fn main() -> Result<()> {
         }
         Some(Commands::Ws(WsCommands::ExportCsv)) => {
             application.export_ws_csv(std::io::stdout()).await;
+        }
+        Some(Commands::OnePiece(OnePieceCommands::Scrape)) => {
+            application.scrape_one_piece().await;
+        }
+        Some(Commands::OnePiece(OnePieceCommands::ExportCsv)) => {
+            let wtr = std::io::stdout();
+            application.export_one_piece_csv(wtr).await;
         }
         None => {}
     }
