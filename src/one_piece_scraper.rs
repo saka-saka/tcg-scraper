@@ -29,6 +29,43 @@ impl OnePieceScraper {
         }
         results
     }
+    pub(crate) async fn products(&self) -> Vec<OnePieceProduct> {
+        let mut results = vec![];
+        let url = "https://www.onepiece-cardgame.com/products";
+        let source = reqwest::Client::new()
+            .get(url)
+            .send()
+            .await
+            .unwrap()
+            .text()
+            .await
+            .unwrap();
+        let document = scraper::Html::parse_document(&source);
+        let selector = &Selector::parse(".productsDetail").unwrap();
+        for product_detail in document.select(selector) {
+            let selector = &Selector::parse("dd.productsCategory a").unwrap();
+            let category = product_detail.select(selector).next().unwrap().inner_html();
+            if category != String::from("BOOSTERS") && category != String::from("DECKS") {
+                continue;
+            }
+            let selector = &Selector::parse("dt.productsTit span").unwrap();
+            let title = product_detail.select(selector).next().unwrap().inner_html();
+            let selector = &Selector::parse("dd.productsDate").unwrap();
+            let date = product_detail
+                .select(selector)
+                .next()
+                .unwrap()
+                .text()
+                .skip(2)
+                .next()
+                .unwrap();
+            results.push(OnePieceProduct {
+                title,
+                date: date.to_string(),
+            });
+        }
+        results
+    }
     pub(crate) async fn scrape(&self, series: &str) -> Vec<Result<OnePieceCard, ErrorCode>> {
         let mut results = vec![];
         let url = format!(
@@ -94,6 +131,12 @@ pub struct OnePieceCard {
     pub rarity: String,
     pub set_name: String,
     pub last_fetched_at: LastFetchedAt,
+}
+
+#[derive(Debug)]
+pub struct OnePieceProduct {
+    pub title: String,
+    pub date: String,
 }
 
 #[derive(Debug)]

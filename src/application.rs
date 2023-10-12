@@ -2,7 +2,7 @@ use std::io::Write;
 
 use crate::bigweb_scraper::BigwebScraper;
 use crate::domain::{CardsetURL, PokemonCard, Rarity};
-use crate::one_piece_csv::OnePieceCsv;
+use crate::one_piece_csv::{OnePieceCsv, OnePieceProductsCsv};
 use crate::one_piece_scraper::{self, OnePieceScraper};
 use crate::pokemon_trainer_scraper::{PokemonTrainerSiteScraper, ThePTCGSet};
 use crate::repository::Repository;
@@ -261,6 +261,19 @@ impl Application {
     pub async fn scrape_one_piece(&self) {
         let sets = self.one_piece_scraper.set().await;
         println!("{:?}", sets);
+    }
+    pub async fn scrape_one_piece_products(&self) {
+        let products = self.one_piece_scraper.products().await;
+        println!("{:#?}", products);
+    }
+    pub async fn export_one_piece_product_csv<W: std::io::Write>(&self, w: W) {
+        let products = self.one_piece_scraper.products().await;
+        let mut wtr = csv::Writer::from_writer(w);
+        for product in products {
+            let c: OnePieceProductsCsv = product.into();
+            wtr.serialize(c).unwrap();
+        }
+        wtr.flush().unwrap();
     }
     pub async fn export_one_piece_csv<W: std::io::Write>(&self, w: W) {
         let sets = self.one_piece_scraper.set().await;

@@ -80,7 +80,9 @@ enum YugiohCommands {
 #[derive(Subcommand)]
 enum OnePieceCommands {
     Scrape,
+    ScrapeProducts,
     ExportCsv,
+    ExportProductCsv,
 }
 
 #[tokio::main]
@@ -185,9 +187,16 @@ async fn main() -> Result<()> {
         Some(Commands::OnePiece(OnePieceCommands::Scrape)) => {
             application.scrape_one_piece().await;
         }
+        Some(Commands::OnePiece(OnePieceCommands::ScrapeProducts)) => {
+            application.scrape_one_piece_products().await;
+        }
         Some(Commands::OnePiece(OnePieceCommands::ExportCsv)) => {
             let wtr = std::io::stdout();
             application.export_one_piece_csv(wtr).await;
+        }
+        Some(Commands::OnePiece(OnePieceCommands::ExportProductCsv)) => {
+            let wtr = std::io::stdout();
+            application.export_one_piece_product_csv(wtr).await;
         }
         None => {}
     }

@@ -1,4 +1,4 @@
-use crate::one_piece_scraper::OnePieceCard;
+use crate::one_piece_scraper::{OnePieceCard, OnePieceProduct};
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::Serialize;
@@ -38,6 +38,22 @@ pub struct OnePieceCsv {
     p_language: Option<String>,
     #[serde(rename(serialize = "id"))]
     id: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "PascalCase")]
+pub struct OnePieceProductsCsv {
+    title: String,
+    date: String,
+}
+
+impl From<OnePieceProduct> for OnePieceProductsCsv {
+    fn from(value: OnePieceProduct) -> Self {
+        OnePieceProductsCsv {
+            title: sanitize(&value.title),
+            date: value.date,
+        }
+    }
 }
 
 impl From<OnePieceCard> for OnePieceCsv {
@@ -82,26 +98,19 @@ impl From<OnePieceCard> for OnePieceCsv {
 }
 
 fn sanitize(s: &str) -> String {
-    let s1 = s.replace(['【', '】'], "").replace("&amp;", "&");
     lazy_static! {
-        static ref RE: Regex = Regex::new("[1-9]種").unwrap();
+        static ref RE: Regex = Regex::new("【.*】").unwrap();
     }
-    RE.replace_all(&s1, "").trim().to_string()
+    RE.replace_all(&s, "").trim().to_string()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     #[test]
-    fn sanitize_x_kind() {
-        let result = sanitize("バトル強化デッキ 3種");
-        let expected = "バトル強化デッキ".to_string();
-        assert_eq!(result, expected);
-    }
-    #[test]
     fn sanitize_braces() {
         let result = sanitize("最強爆流コンボデッキ60【カメックス＋キュレムEX】");
-        let expected = "最強爆流コンボデッキ60カメックス＋キュレムEX".to_string();
+        let expected = "最強爆流コンボデッキ60".to_string();
         assert_eq!(result, expected);
     }
 }
