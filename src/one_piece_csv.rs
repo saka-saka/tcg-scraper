@@ -101,7 +101,8 @@ fn sanitize(s: &str) -> String {
     lazy_static! {
         static ref RE: Regex = Regex::new("【.*】").unwrap();
     }
-    RE.replace_all(&s, "").trim().to_string()
+    let s = RE.replace_all(&s, "").trim().to_string();
+    s.replace("&amp;", "").replace("&nbsp;", "")
 }
 
 #[cfg(test)]
