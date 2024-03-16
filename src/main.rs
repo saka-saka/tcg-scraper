@@ -1,6 +1,7 @@
 mod application;
 mod bigweb_scraper;
 mod domain;
+mod limitless_scraper;
 mod one_piece_csv;
 mod one_piece_scraper;
 mod pokemon_csv;
@@ -44,23 +45,36 @@ enum Commands {
         #[arg(short, long)]
         all: bool,
     },
-    PokemonTrainer {
-        #[arg(short, long)]
-        build_fetchable: bool,
-        #[arg(short, long)]
-        update_expansion: bool,
-        #[arg(long)]
-        update_printing: bool,
-        #[arg(long)]
-        update_rarity: bool,
-    },
+    #[command(subcommand)]
+    PokemonTrainer(PokemonTrainerCommands),
+    // PokemonTrainer {
+    //     #[arg(short, long)]
+    //     build_fetchable: bool,
+    //     #[arg(short, long)]
+    //     update_expansion: bool,
+    //     #[arg(long)]
+    //     update_printing: bool,
+    //     #[arg(long)]
+    //     update_rarity: bool,
+    //     #[arg(long)]
+    //     download_image: bool,
+    //     #[arg(long)]
+    //     export: bool,
+    // },
     #[command(subcommand)]
     Yugioh(YugiohCommands),
     #[command(subcommand)]
     Ws(WsCommands),
     #[command(subcommand)]
     OnePiece(OnePieceCommands),
+    #[command(subcommand)]
+    Limitless(LimitlessCommands),
     ResyncAll,
+}
+
+#[derive(Subcommand)]
+enum PokemonTrainerCommands {
+    Run,
 }
 
 #[derive(Subcommand)]
@@ -83,6 +97,11 @@ enum OnePieceCommands {
     ScrapeProducts,
     ExportCsv,
     ExportProductCsv,
+}
+
+#[derive(Subcommand)]
+enum LimitlessCommands {
+    Poc,
 }
 
 #[tokio::main]
@@ -128,25 +147,46 @@ async fn main() -> Result<()> {
             let expansions = application.list_all_expansions().await.unwrap();
             println!("{expansions:#?}")
         }
-        Some(Commands::PokemonTrainer {
-            build_fetchable,
-            update_expansion,
-            update_printing,
-            update_rarity,
-        }) => {
-            if *build_fetchable {
-                application.build_pokemon_trainer_fetchable().await.unwrap()
+        Some(Commands::PokemonTrainer(commands)) => match commands {
+            PokemonTrainerCommands::Run => {
+                // application.update_entire_pokemon_trainer_expansion().await;
+                // application.build_pokemon_trainer_fetchable().await?;
+                application.download_all_pokemon_trainer_image().await
             }
-            if *update_expansion {
-                application.update_entire_pokemon_trainer_expansion().await
-            }
-            if *update_printing {
-                application.update_pokemon_trainer_printing().await
-            }
-            if *update_rarity {
-                application.update_rarity().await
-            }
-        }
+        },
+        // Some(Commands::PokemonTrainer {
+        //     build_fetchable,
+        //     update_expansion,
+        //     update_printing,
+        //     update_rarity,
+        //     download_image,
+        //     export,
+        // }) => {
+        //     if *build_fetchable {
+        //         application.build_pokemon_trainer_fetchable().await.unwrap()
+        //     }
+        //     if *update_expansion {
+        //         application.update_entire_pokemon_trainer_expansion().await
+        //     }
+        //     if *update_printing {
+        //         application.update_pokemon_trainer_printing().await
+        //     }
+        //     if *update_rarity {
+        //         application.update_rarity().await
+        //     }
+        //     if *download_image {
+        //         application.download_all_pokemon_trainer_image().await
+        //     }
+        //     if *export {
+        //         let all_cards = application.export_pokemon_trainer().await.unwrap();
+        //         let mut wtr = csv::Writer::from_writer(std::io::stdout());
+        //         for card in all_cards {
+        //             let csv_card: PokemonCSV = card.into();
+        //             wtr.serialize(csv_card)?;
+        //         }
+        //         wtr.flush()?;
+        //     }
+        // }
         Some(Commands::DownloadImage) => {
             application.download_image().await.unwrap();
         }
@@ -197,6 +237,9 @@ async fn main() -> Result<()> {
         Some(Commands::OnePiece(OnePieceCommands::ExportProductCsv)) => {
             let wtr = std::io::stdout();
             application.export_one_piece_product_csv(wtr).await;
+        }
+        Some(Commands::Limitless(LimitlessCommands::Poc)) => {
+            application.poc().await;
         }
         None => {}
     }

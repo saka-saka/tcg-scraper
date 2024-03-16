@@ -2,6 +2,7 @@ use std::io::Write;
 
 use crate::bigweb_scraper::BigwebScraper;
 use crate::domain::{CardsetURL, PokemonCard, Rarity};
+use crate::limitless_scraper::LimitlessScraper;
 use crate::one_piece_csv::{OnePieceCsv, OnePieceProductsCsv};
 use crate::one_piece_scraper::{self, OnePieceScraper};
 use crate::pokemon_trainer_scraper::{PokemonTrainerSiteScraper, ThePTCGSet};
@@ -10,6 +11,7 @@ use crate::ws_csv::WsCSV;
 use crate::ws_scraper::WsScraper;
 use crate::yugioh_csv::YugiohCsv;
 use crate::yugioh_scraper::YugiohScraper;
+use futures::StreamExt;
 use strum::IntoEnumIterator;
 use tracing::{debug, error};
 
@@ -20,6 +22,7 @@ pub struct Application {
     repository: Repository,
     ws_scraper: WsScraper,
     one_piece_scraper: OnePieceScraper,
+    limitless_scraper: LimitlessScraper,
 }
 
 impl Application {
@@ -29,6 +32,7 @@ impl Application {
         let bigweb_repository = Repository::new(url);
         let ws_scraper = WsScraper {};
         let one_piece_scraper = one_piece_scraper::OnePieceScraper {};
+        let limitless_scraper = LimitlessScraper::new();
         Self {
             the_ptcg_scraper,
             bigweb_scraper,
@@ -36,6 +40,7 @@ impl Application {
             repository: bigweb_repository,
             ws_scraper,
             one_piece_scraper,
+            limitless_scraper,
         }
     }
     pub async fn scrape_ws(&self) {
@@ -66,6 +71,56 @@ impl Application {
             self.repository.image_downloaded(&card).await.unwrap();
         }
         Ok(())
+    }
+    pub async fn download_all_pokemon_trainer_image(&self) {
+        let codes = self.repository.get_ptcg_codes();
+        codes
+            .for_each(|code| async move {
+                let client = reqwest::Client::new();
+                let code: i32 = code.parse().unwrap();
+                let image_url = format!(
+                    "https://asia.pokemon-card.com/tw/card-img/tw{:08}.png",
+                    code
+                );
+                let result = match client.get(&image_url).send().await {
+                    Ok(r) => r,
+                    Err(_) => return,
+                };
+                let paths = result.url().path_segments().unwrap();
+                let filename = paths.last().unwrap();
+                let save_path = format!("images/{}", filename);
+                let mut file = std::fs::OpenOptions::new()
+                    .create(true)
+                    .write(true)
+                    .truncate(true)
+                    .open(save_path)
+                    .unwrap();
+                let bytes = result.bytes().await.unwrap();
+                let _ = file.write(&bytes).unwrap();
+            })
+            .await;
+        // for code in codes {
+        //     let code: i32 = code.parse().unwrap();
+        //     let image_url = format!(
+        //         "https://asia.pokemon-card.com/tw/card-img/tw{:08}.png",
+        //         code
+        //     );
+        //     let result = match client.get(&image_url).send().await {
+        //         Ok(r) => r,
+        //         Err(_) => continue,
+        //     };
+        //     let paths = result.url().path_segments().unwrap();
+        //     let filename = paths.last().unwrap();
+        //     let save_path = format!("images/{}", filename);
+        //     let mut file = std::fs::OpenOptions::new()
+        //         .create(true)
+        //         .write(true)
+        //         .truncate(true)
+        //         .open(save_path)
+        //         .unwrap();
+        //     let bytes = result.bytes().await.unwrap();
+        //     let _ = file.write(&bytes).unwrap();
+        // }
     }
     pub async fn update_entire_cardset_db(&self) -> Result<(), Error> {
         let pokemon_cardsets = &self.bigweb_scraper.fetch_pokemon_cardset()?;
@@ -138,6 +193,10 @@ impl Application {
     pub async fn export_entire_card_db(&self) -> Result<Vec<PokemonCard>, Error> {
         let all_cards = self.repository.fetch_all_cards().await?;
         Ok(all_cards)
+    }
+    pub async fn export_pokemon_trainer(&self) -> Result<Vec<PokemonCard>, Error> {
+        let all_cards = self.repository.get_all_pokemon_trainer_printing();
+        Ok(all_cards.collect().await)
     }
     pub async fn unsync_entire_cardset_db(&self) -> Result<(), Error> {
         let all_sets = self.repository.get_cardset_ids(true).await?;
@@ -285,6 +344,9 @@ impl Application {
             }
         }
         wtr.flush().unwrap();
+    }
+    pub async fn poc(&self) {
+        self.limitless_scraper.poc().await;
     }
 }
 

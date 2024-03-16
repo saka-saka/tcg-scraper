@@ -193,7 +193,8 @@ impl PokemonTrainerSiteScraper {
         let collector_number =
             get_first_elem_inner_html(".collectorNumber", document.root_element());
         card_builder.number(collector_number);
-        let artist = get_first_elem_inner_html(".illustrator a", document.root_element()).unwrap();
+        let artist = get_first_elem_inner_html(".illustrator a", document.root_element())
+            .unwrap_or_else(|| "".to_string());
         card_builder.artist(artist);
         let mut card_url = card_url.to_string();
         card_url.pop();

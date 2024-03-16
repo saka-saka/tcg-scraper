@@ -1,7 +1,9 @@
-use crate::domain::{BigwebScrappedPokemonCard, Cardset, PokemonCard, Rarity};
+use crate::domain::{BigwebScrappedPokemonCard, Cardset, LastFetchedAt, PokemonCard, Rarity};
 use crate::pokemon_trainer_scraper::{ThePTCGCard, ThePTCGSet};
 use crate::yugioh_scraper::YugiohPrinting;
-use sqlx::postgres::PgPoolOptions;
+use futures::stream::BoxStream;
+use futures::{Future, StreamExt};
+use sqlx::postgres::{PgPoolOptions, PgQueryResult};
 use sqlx::{Pool, Postgres, Transaction};
 
 pub struct Repository {
@@ -353,6 +355,47 @@ impl Repository {
             })
             .collect();
         Ok(printings)
+    }
+
+    pub(crate) fn get_ptcg_codes(&self) -> BoxStream<String> {
+        sqlx::query!("SELECT code FROM pokemon_trainer_printing")
+            .fetch(&self.pool)
+            .filter_map(|r| async { Some(r.ok()?.code) })
+            .boxed()
+    }
+
+    pub(crate) fn get_all_pokemon_trainer_printing(&self) -> BoxStream<PokemonCard> {
+        sqlx::query!(
+            "SELECT
+            p.code as id,
+            p.name as name,
+            p.number as number,
+            NULL::bigint as sale_price,
+            p.rarity as rarity,
+            e.code as set_id,
+            e.name as set_name,
+            e.code as set_ref,
+            NULL as remark
+            FROM pokemon_trainer_printing p
+            LEFT JOIN pokemon_trainer_expansion e ON p.expansion_code = e.code"
+        )
+        .fetch(&self.pool)
+        .filter_map(|r| async {
+            let record = r.ok()?;
+            Some(PokemonCard {
+                id: record.id,
+                set_id: record.set_id.unwrap(),
+                set_name: record.set_name.unwrap(),
+                name: record.name,
+                number: Some(record.number),
+                set_ref: record.set_ref,
+                sale_price: record.sale_price,
+                rarity: record.rarity,
+                remark: record.remark,
+                last_fetched_at: LastFetchedAt::default(),
+            })
+        })
+        .boxed()
     }
 }
 
