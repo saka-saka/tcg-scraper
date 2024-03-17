@@ -144,14 +144,18 @@ async fn main() -> Result<()> {
             }
         }
         Some(Commands::PTCGScraper) => {
-            let expansions = application.list_all_expansions().await.unwrap();
+            let expansions = application
+                .pokemon_trainer()
+                .list_all_expansions()
+                .await
+                .unwrap();
             println!("{expansions:#?}")
         }
         Some(Commands::PokemonTrainer(commands)) => match commands {
             PokemonTrainerCommands::Run => {
                 // application.update_entire_pokemon_trainer_expansion().await;
                 // application.build_pokemon_trainer_fetchable().await?;
-                application.download_all_pokemon_trainer_image().await
+                application.pokemon_trainer().download_all_image().await
             }
         },
         // Some(Commands::PokemonTrainer {
@@ -195,10 +199,11 @@ async fn main() -> Result<()> {
             application.update_entire_card_db().await?;
         }
         Some(Commands::Yugioh(YugiohCommands::BuildExpLink)) => {
-            application.build_yugioh_expansion_link().await;
+            application.yugioh().build_yugioh_expansion_link().await;
         }
         Some(Commands::Yugioh(YugiohCommands::BuildPriLink)) => loop {
             application
+                .yugioh()
                 .build_yugioh_printing_link()
                 .await
                 .expect("ran out of expansion link to build printing link");
@@ -208,6 +213,7 @@ async fn main() -> Result<()> {
         Some(Commands::Yugioh(YugiohCommands::BuildDetail)) => loop {
             let waiting_secs = 1;
             application
+                .yugioh()
                 .build_yugioh_printing_detail()
                 .await
                 .expect("ran out of printing link");
@@ -216,7 +222,10 @@ async fn main() -> Result<()> {
         },
         Some(Commands::Yugioh(YugiohCommands::ExportCsv)) => {
             let wtr = std::io::stdout();
-            application.export_yugioh_printing_detail(wtr).await;
+            application
+                .yugioh()
+                .export_yugioh_printing_detail(wtr)
+                .await;
         }
         Some(Commands::Ws(WsCommands::Scrape)) => {
             application.scrape_ws().await;
@@ -225,18 +234,21 @@ async fn main() -> Result<()> {
             application.export_ws_csv(std::io::stdout()).await;
         }
         Some(Commands::OnePiece(OnePieceCommands::Scrape)) => {
-            application.scrape_one_piece().await;
+            application.one_piece().scrape_one_piece().await;
         }
         Some(Commands::OnePiece(OnePieceCommands::ScrapeProducts)) => {
-            application.scrape_one_piece_products().await;
+            application.one_piece().scrape_one_piece_products().await;
         }
         Some(Commands::OnePiece(OnePieceCommands::ExportCsv)) => {
             let wtr = std::io::stdout();
-            application.export_one_piece_csv(wtr).await;
+            application.one_piece().export_one_piece_csv(wtr).await;
         }
         Some(Commands::OnePiece(OnePieceCommands::ExportProductCsv)) => {
             let wtr = std::io::stdout();
-            application.export_one_piece_product_csv(wtr).await;
+            application
+                .one_piece()
+                .export_one_piece_product_csv(wtr)
+                .await;
         }
         Some(Commands::Limitless(LimitlessCommands::Poc)) => {
             application.poc().await;

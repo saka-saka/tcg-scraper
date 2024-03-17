@@ -2,10 +2,11 @@ use crate::domain::{BigwebScrappedPokemonCard, Cardset, LastFetchedAt, PokemonCa
 use crate::pokemon_trainer_scraper::{ThePTCGCard, ThePTCGSet};
 use crate::yugioh_scraper::YugiohPrinting;
 use futures::stream::BoxStream;
-use futures::{Future, StreamExt};
-use sqlx::postgres::{PgPoolOptions, PgQueryResult};
+use futures::StreamExt;
+use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres, Transaction};
 
+#[derive(Clone)]
 pub struct Repository {
     pool: Pool<Postgres>,
 }
