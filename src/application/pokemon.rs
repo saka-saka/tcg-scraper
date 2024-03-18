@@ -42,11 +42,12 @@ impl PokemonTrainer {
             })
             .await;
     }
-    pub async fn update_entire_pokemon_trainer_expansion(&self) {
-        let expansions = self.scraper.fetch_expansion().await.unwrap();
+    pub async fn update_entire_pokemon_trainer_expansion(&self) -> Result<(), Error> {
+        let expansions = self.scraper.fetch_expansion().await?;
         for set in expansions {
             self.repository.upsert_pokemon_trainer_expansion(&set).await;
         }
+        Ok(())
     }
     pub async fn build_pokemon_trainer_fetchable(&self) -> Result<(), Error> {
         let expansion_codes = self

@@ -218,7 +218,11 @@ impl Repository {
     }
     pub async fn get_fetchable(&self) -> Vec<(String, String)> {
         let fetchables = sqlx::query!(
-            "SELECT code, expansion_code FROM pokemon_trainer_fetchable_card WHERE fetched = False LIMIT 10"
+            "SELECT fetchable.code, fetchable.expansion_code
+            FROM pokemon_trainer_fetchable_card fetchable
+            LEFT JOIN pokemon_trainer_printing printing ON fetchable.code = printing.code
+            WHERE printing.name is NULL
+            LIMIT 10"
         )
         .fetch_all(&self.pool)
         .await

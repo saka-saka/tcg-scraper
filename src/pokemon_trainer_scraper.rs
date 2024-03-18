@@ -1,6 +1,7 @@
 use crate::{domain::Rarity, scraper_error::Error};
 use derive_builder::Builder;
 use fantoccini::{wd::Capabilities, ClientBuilder, Locator};
+use html_escape::decode_html_entities;
 use scraper::{ElementRef, Selector};
 
 const POKEMON_TRAINER_SITE_URL_BASE: &str = "https://asia.pokemon-card.com";
@@ -68,6 +69,7 @@ impl PokemonTrainerSiteScraper {
             let expansion_link_selector = &Selector::parse(".expansionLink")
                 .map_err(|e| Error::ScraperBackend(e.to_string()))?;
             for link in document.select(expansion_link_selector) {
+                // example: /tw/card-search/list/?expansionCodes=SV5K
                 let expansion_code = link
                     .value()
                     .attr("href")
@@ -75,16 +77,22 @@ impl PokemonTrainerSiteScraper {
                     .split_once('=')
                     .unwrap()
                     .1;
+
+                // example: 朱＆紫
                 let series_selector = &Selector::parse(".series").unwrap();
                 let series_elem = link.select(series_selector).next().unwrap();
+
+                // example: 擴充包「狂野之力」
                 let expansion_title_selector = &Selector::parse(".expansionTitle").unwrap();
                 let expansion_title_elem = link.select(expansion_title_selector).next().unwrap();
                 let release_date_selector = &Selector::parse(".relaseDate span").unwrap();
                 let release_date_elem = link.select(release_date_selector).next().unwrap();
+                let name = expansion_title_elem.inner_html().trim().to_owned();
+                let decoded_name = decode_html_entities(&name);
                 let pset = ThePTCGSet {
                     expansion_code: expansion_code.to_owned().to_lowercase(),
                     series: series_elem.inner_html().trim().to_owned(),
-                    name: expansion_title_elem.inner_html().trim().to_owned(),
+                    name: decoded_name.to_string(),
                     release_date: release_date_elem.inner_html().trim().to_owned(),
                 };
                 psets.push(pset);
