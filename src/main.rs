@@ -47,20 +47,6 @@ enum Commands {
     },
     #[command(subcommand)]
     PokemonTrainer(PokemonTrainerCommands),
-    // PokemonTrainer {
-    //     #[arg(short, long)]
-    //     build_fetchable: bool,
-    //     #[arg(short, long)]
-    //     update_expansion: bool,
-    //     #[arg(long)]
-    //     update_printing: bool,
-    //     #[arg(long)]
-    //     update_rarity: bool,
-    //     #[arg(long)]
-    //     download_image: bool,
-    //     #[arg(long)]
-    //     export: bool,
-    // },
     #[command(subcommand)]
     Yugioh(YugiohCommands),
     #[command(subcommand)]
@@ -154,48 +140,9 @@ async fn main() -> Result<()> {
         Some(Commands::PokemonTrainer(commands)) => match commands {
             PokemonTrainerCommands::Run => {
                 let pokemon_trainer = application.pokemon_trainer();
-                // application
-                //     .pokemon_trainer()
-                //     .update_entire_pokemon_trainer_expansion()
-                //     .await?;
-                // pokemon_trainer.build_pokemon_trainer_fetchable().await?;
                 pokemon_trainer.update_pokemon_trainer_printing().await;
-                // application.pokemon_trainer().download_all_image().await
             }
         },
-        // Some(Commands::PokemonTrainer {
-        //     build_fetchable,
-        //     update_expansion,
-        //     update_printing,
-        //     update_rarity,
-        //     download_image,
-        //     export,
-        // }) => {
-        //     if *build_fetchable {
-        //         application.build_pokemon_trainer_fetchable().await.unwrap()
-        //     }
-        //     if *update_expansion {
-        //         application.update_entire_pokemon_trainer_expansion().await
-        //     }
-        //     if *update_printing {
-        //         application.update_pokemon_trainer_printing().await
-        //     }
-        //     if *update_rarity {
-        //         application.update_rarity().await
-        //     }
-        //     if *download_image {
-        //         application.download_all_pokemon_trainer_image().await
-        //     }
-        //     if *export {
-        //         let all_cards = application.export_pokemon_trainer().await.unwrap();
-        //         let mut wtr = csv::Writer::from_writer(std::io::stdout());
-        //         for card in all_cards {
-        //             let csv_card: PokemonCSV = card.into();
-        //             wtr.serialize(csv_card)?;
-        //         }
-        //         wtr.flush()?;
-        //     }
-        // }
         Some(Commands::DownloadImage) => {
             application.download_image().await.unwrap();
         }
