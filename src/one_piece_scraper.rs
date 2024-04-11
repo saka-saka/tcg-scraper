@@ -1,16 +1,19 @@
+use std::path::Path;
+
 use scraper::Selector;
+use serde::Deserialize;
+use serde_json::json;
+use strum_macros::AsRefStr;
 
 use crate::domain::LastFetchedAt;
+const BASEURL: &'static str = "https://www.onepiece-cardgame.com";
 
 pub(crate) struct OnePieceScraper {}
 impl OnePieceScraper {
     pub(crate) async fn set(&self) -> Vec<String> {
         let mut results = vec![];
         let series = "550105";
-        let url = format!(
-            "https://www.onepiece-cardgame.com/cardlist/?series={}",
-            series
-        );
+        let url = format!("{}/cardlist/?series={}", BASEURL, series);
         let source = reqwest::Client::new()
             .get(&url)
             .send()
@@ -31,7 +34,7 @@ impl OnePieceScraper {
     }
     pub(crate) async fn products(&self) -> Vec<OnePieceProduct> {
         let mut results = vec![];
-        let url = "https://www.onepiece-cardgame.com/products";
+        let url = format!("{}/products", BASEURL);
         let source = reqwest::Client::new()
             .get(url)
             .send()
@@ -66,42 +69,59 @@ impl OnePieceScraper {
         }
         results
     }
-    pub(crate) async fn scrape(&self, series: &str) -> Vec<Result<OnePieceCard, ErrorCode>> {
+    pub(crate) async fn scrape_cards(
+        &self,
+        series: &str,
+    ) -> Result<Vec<Result<OnePieceCard, ErrorCode>>, crate::error::Error> {
         let mut results = vec![];
-        let url = format!(
-            "https://www.onepiece-cardgame.com/cardlist/?series={}",
-            series
-        );
+        let url = format!("{}/cardlist/?series={}", BASEURL, series);
         let source = reqwest::Client::new()
             .get(&url)
             .send()
-            .await
-            .unwrap()
+            .await?
             .text()
-            .await
-            .unwrap();
+            .await?;
         let document = scraper::Html::parse_document(&source);
-        let set_name_selector = &Selector::parse("#series option").unwrap();
+        let set_name_selector = &Selector::parse("#series option")?;
         let set_name = document
             .select(&set_name_selector)
             .skip_while(|e| e.value().attr("selected").is_none())
             .next()
             .unwrap()
             .inner_html();
-        let dls_selector = Selector::parse("div.resultCol dl").unwrap();
+        let dls_selector = Selector::parse("div.resultCol dl")?;
         let dls = document.select(&dls_selector);
         for dl in dls {
-            let card_name_selector = &Selector::parse("dt .cardName").unwrap();
+            let get_info_selector = &Selector::parse("dd .getInfo")?;
+            let get_info = dl
+                .select(get_info_selector)
+                .next()
+                .unwrap()
+                .text()
+                .skip(1)
+                .next()
+                .unwrap()
+                .trim();
+            let card_name_selector = &Selector::parse("dt .cardName")?;
             let card_name = dl.select(card_name_selector).next().unwrap().inner_html();
-            let code_selector = &Selector::parse("dt .infoCol span").unwrap();
-            let code = dl.select(code_selector).next().unwrap().inner_html();
+            let code_selector = &Selector::parse("dt .infoCol span")?;
             let rarity = dl
                 .select(code_selector)
                 .skip(1)
                 .next()
                 .unwrap()
                 .inner_html();
-            let img_selector = &Selector::parse("dd img").unwrap();
+            let rarity = serde_json::from_value(json!(&rarity))?;
+            let card_type = dl
+                .select(code_selector)
+                .skip(2)
+                .next()
+                .unwrap()
+                .inner_html()
+                .trim()
+                .to_string();
+            let card_type: OnePieceCardType = serde_json::from_value(json!(&card_type))?;
+            let img_selector = &Selector::parse("dd img")?;
             let img_src = dl
                 .select(img_selector)
                 .next()
@@ -109,17 +129,22 @@ impl OnePieceScraper {
                 .value()
                 .attr("src")
                 .unwrap();
+            let path = Path::new(img_src);
+            let file_name = path.file_name().unwrap().to_string_lossy().to_string();
+            let (code, _) = file_name.split_once('.').unwrap();
             let one_piece_card = OnePieceCard {
                 name: card_name,
-                code,
+                code: code.to_string(),
                 img_src: img_src.to_owned(),
                 rarity,
+                get_info: get_info.to_string(),
+                r#type: card_type,
                 set_name: set_name.clone(),
                 last_fetched_at: LastFetchedAt::default(),
             };
             results.push(Ok(one_piece_card));
         }
-        results
+        Ok(results)
     }
 }
 
@@ -128,9 +153,38 @@ pub struct OnePieceCard {
     pub name: String,
     pub code: String,
     pub img_src: String,
-    pub rarity: String,
+    pub rarity: OnePieceCardRarity,
     pub set_name: String,
+    pub r#type: OnePieceCardType,
     pub last_fetched_at: LastFetchedAt,
+    pub get_info: String,
+}
+
+#[derive(Debug, Deserialize, sqlx::Type)]
+#[serde(rename_all = "UPPERCASE")]
+#[sqlx(type_name = "op_type_enum")]
+pub enum OnePieceCardType {
+    Leader,
+    #[serde(alias = "事件")]
+    Event,
+    #[serde(alias = "キャラ")]
+    Character,
+    Stage,
+}
+
+#[derive(Debug, Deserialize, sqlx::Type, AsRefStr)]
+#[serde(rename_all = "UPPERCASE")]
+#[sqlx(type_name = "op_rarity_enum")]
+pub enum OnePieceCardRarity {
+    #[serde(alias = "SP卡", alias = "SPカード")]
+    SP,
+    R,
+    SEC,
+    C,
+    P,
+    UC,
+    SR,
+    L,
 }
 
 #[derive(Debug)]

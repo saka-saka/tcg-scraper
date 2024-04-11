@@ -1,4 +1,5 @@
 use crate::domain::{BigwebScrappedPokemonCard, Cardset, LastFetchedAt, PokemonCard, Rarity};
+use crate::one_piece_scraper::{OnePieceCard, OnePieceCardRarity, OnePieceCardType};
 use crate::pokemon_trainer_scraper::{ThePTCGCard, ThePTCGSet};
 use crate::yugioh_scraper::YugiohPrinting;
 use futures::stream::BoxStream;
@@ -289,7 +290,7 @@ impl Repository {
             LIMIT 1 FOR UPDATE SKIP LOCKED
             "
         )
-        .fetch_optional(&mut conn)
+        .fetch_optional(&mut *conn)
         .await
         .unwrap();
         link.map(|link| ExpansionLink {
@@ -301,7 +302,7 @@ impl Repository {
         let mut conn = self.pool.begin().await.unwrap();
         let link =
             sqlx::query!("SELECT url FROM yugioh_printing_link LIMIT 1 FOR UPDATE SKIP LOCKED")
-                .fetch_optional(&mut conn)
+                .fetch_optional(&mut *conn)
                 .await
                 .unwrap();
         link.map(|link| PrintingLink {
@@ -402,6 +403,23 @@ impl Repository {
         })
         .boxed()
     }
+    pub async fn upsert_one_piece(&self, card: OnePieceCard) {
+        sqlx::query!(
+            "
+            INSERT INTO one_piece(code, name, img_src, rarity, set_name, type, get_info)
+            VALUES($1, $2, $3, $4, $5, $6, $7)",
+            card.code,
+            card.name,
+            card.img_src,
+            card.rarity as OnePieceCardRarity,
+            card.set_name,
+            card.r#type as OnePieceCardType,
+            card.get_info,
+        )
+        .execute(&self.pool)
+        .await
+        .unwrap();
+    }
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -421,7 +439,7 @@ impl<'a> ExpansionLink<'a> {
             "DELETE FROM yugioh_expansion_link WHERE url = $1",
             &self.url
         )
-        .execute(&mut self.conn)
+        .execute(&mut *self.conn)
         .await
         .unwrap();
         self.conn.commit().await.unwrap();
@@ -435,7 +453,7 @@ pub struct PrintingLink<'a> {
 impl<'a> PrintingLink<'a> {
     pub async fn done(mut self) {
         sqlx::query!("DELETE FROM yugioh_printing_link WHERE url = $1", &self.url)
-            .execute(&mut self.conn)
+            .execute(&mut *self.conn)
             .await
             .unwrap();
         self.conn.commit().await.unwrap();

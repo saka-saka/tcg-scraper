@@ -1,6 +1,7 @@
 mod application;
 mod bigweb_scraper;
 mod domain;
+mod error;
 mod limitless_scraper;
 mod one_piece_csv;
 mod one_piece_scraper;

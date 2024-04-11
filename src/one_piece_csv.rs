@@ -68,7 +68,7 @@ impl From<OnePieceCard> for OnePieceCsv {
             set: Some(sanitize(&value.set_name)),
             edition: None,
             series: None,
-            rarity: Some(value.rarity),
+            rarity: Some(value.rarity.as_ref().to_string()),
             material: None,
             release_year: None,
             language: Some(String::from("ja")),

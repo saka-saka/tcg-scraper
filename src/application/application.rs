@@ -45,7 +45,10 @@ impl Application {
     }
     pub fn one_piece(&self) -> OnePiece {
         let scraper = OnePieceScraper {};
-        OnePiece { scraper }
+        OnePiece {
+            scraper,
+            repository: self.repository.clone(),
+        }
     }
     pub fn yugioh(&self) -> Yugioh {
         let scraper = YugiohScraper::new();

@@ -1,15 +1,22 @@
 use crate::{
     one_piece_csv::{OnePieceCsv, OnePieceProductsCsv},
     one_piece_scraper::OnePieceScraper,
+    repository::Repository,
 };
 
 pub struct OnePiece {
     pub scraper: OnePieceScraper,
+    pub repository: Repository,
 }
 impl OnePiece {
     pub async fn scrape_one_piece(&self) {
         let sets = self.scraper.set().await;
-        println!("{:?}", sets);
+        for set in sets {
+            for card in self.scraper.scrape_cards(&set).await.unwrap() {
+                // let c: OnePieceCsv = card.unwrap().into();
+                self.repository.upsert_one_piece(card.unwrap()).await;
+            }
+        }
     }
     pub async fn scrape_one_piece_products(&self) {
         let products = self.scraper.products().await;
@@ -28,8 +35,9 @@ impl OnePiece {
         let sets = self.scraper.set().await;
         let mut wtr = csv::Writer::from_writer(w);
         for set in sets {
-            for card in self.scraper.scrape(&set).await {
+            for card in self.scraper.scrape_cards(&set).await.unwrap() {
                 let c: OnePieceCsv = card.unwrap().into();
+                // println!("{:?}", c);
                 wtr.serialize(c).unwrap();
             }
         }
