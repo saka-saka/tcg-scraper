@@ -15,7 +15,7 @@ futures = "0.3.30"
 headless_chrome = { version = "1.0.9", default-features = false }
 pest = "2.7.9"
 pest_derive = "2.7.9"
-scraper = "0.19.0"
+scraper = { version = "0.19.0", features = ["atomic"] }
 serde = { version = "1.0.197", features = ["derive"] }
 serde_json = "1.0.115"
 serde_qs = "0.13.0"

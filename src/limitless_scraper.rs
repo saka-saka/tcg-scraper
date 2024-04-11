@@ -1,5 +1,4 @@
-use derive_builder::Builder;
-use fantoccini::{wd::Capabilities, ClientBuilder, Locator};
+use fantoccini::wd::Capabilities;
 use scraper::Selector;
 
 pub(crate) struct LimitlessScraper {

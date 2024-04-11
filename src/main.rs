@@ -82,6 +82,7 @@ enum YugiohCommands {
 enum OnePieceCommands {
     Scrape,
     ScrapeProducts,
+    DownloadImages,
     ExportCsv,
     ExportProductCsv,
 }
@@ -187,21 +188,24 @@ async fn main() -> Result<()> {
             application.export_ws_csv(std::io::stdout()).await;
         }
         Some(Commands::OnePiece(OnePieceCommands::Scrape)) => {
-            application.one_piece().scrape_one_piece().await;
+            application.one_piece().scrape_one_piece().await?;
+        }
+        Some(Commands::OnePiece(OnePieceCommands::DownloadImages)) => {
+            application.one_piece().download_images().await?;
         }
         Some(Commands::OnePiece(OnePieceCommands::ScrapeProducts)) => {
             application.one_piece().scrape_one_piece_products().await;
         }
         Some(Commands::OnePiece(OnePieceCommands::ExportCsv)) => {
             let wtr = std::io::stdout();
-            application.one_piece().export_one_piece_csv(wtr).await;
+            application.one_piece().export_one_piece_csv(wtr).await?;
         }
         Some(Commands::OnePiece(OnePieceCommands::ExportProductCsv)) => {
             let wtr = std::io::stdout();
             application
                 .one_piece()
                 .export_one_piece_product_csv(wtr)
-                .await;
+                .await?;
         }
         Some(Commands::Limitless(LimitlessCommands::Poc)) => {
             application.poc().await;

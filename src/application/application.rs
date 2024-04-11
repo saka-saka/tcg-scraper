@@ -1,4 +1,3 @@
-use super::error::Error;
 use super::one_piece::OnePiece;
 use super::yugioh::Yugioh;
 use crate::bigweb_scraper::BigwebScraper;
@@ -62,7 +61,7 @@ impl Application {
             println!("{result:#?}");
         }
     }
-    pub async fn download_image(&self) -> Result<(), Error> {
+    pub async fn download_image(&self) -> Result<(), crate::error::Error> {
         let all_cards = self.repository.fetch_card_ids().await.unwrap();
         let client = reqwest::Client::new();
         for card in all_cards {
@@ -86,7 +85,7 @@ impl Application {
         }
         Ok(())
     }
-    pub async fn update_entire_cardset_db(&self) -> Result<(), Error> {
+    pub async fn update_entire_cardset_db(&self) -> Result<(), crate::error::Error> {
         let pokemon_cardsets = &self.bigweb_scraper.fetch_pokemon_cardset()?;
         let (sets, errs): (Vec<_>, Vec<_>) =
             pokemon_cardsets
@@ -107,16 +106,19 @@ impl Application {
         }
         Ok(())
     }
-    pub async fn update_single_set_card_db(&self, set_ref: &str) -> Result<(), Error> {
+    pub async fn update_single_set_card_db(
+        &self,
+        set_ref: &str,
+    ) -> Result<(), crate::error::Error> {
         let set_id = self
             .repository
             .get_cardset_id(set_ref)
             .await?
-            .ok_or(Error::SetNotExists(set_ref.to_string()))?;
+            .ok_or(crate::error::Error::SetNotExists(set_ref.to_string()))?;
         self.update_whole_set_card_db(&set_id).await?;
         Ok(())
     }
-    async fn update_whole_set_card_db(&self, set_id: &str) -> Result<(), Error> {
+    async fn update_whole_set_card_db(&self, set_id: &str) -> Result<(), crate::error::Error> {
         let cardset_url = CardsetURL::from_cardset_id(set_id).unwrap();
         let cards = self
             .bigweb_scraper
@@ -142,23 +144,18 @@ impl Application {
         }
         Ok(())
     }
-    pub async fn update_entire_card_db(&self) -> Result<(), Error> {
+    pub async fn update_entire_card_db(&self) -> Result<(), crate::error::Error> {
         let cardset_ids = self.repository.get_cardset_ids(false).await?;
         for set_id in cardset_ids {
-            match self.update_whole_set_card_db(&set_id).await {
-                Ok(_) => {}
-                Err(err) => {
-                    error!(?err)
-                }
-            };
+            self.update_whole_set_card_db(&set_id).await?
         }
         Ok(())
     }
-    pub async fn export_entire_card_db(&self) -> Result<Vec<PokemonCard>, Error> {
+    pub async fn export_entire_card_db(&self) -> Result<Vec<PokemonCard>, crate::error::Error> {
         let all_cards = self.repository.fetch_all_cards().await?;
         Ok(all_cards)
     }
-    pub async fn unsync_entire_cardset_db(&self) -> Result<(), Error> {
+    pub async fn unsync_entire_cardset_db(&self) -> Result<(), crate::error::Error> {
         let all_sets = self.repository.get_cardset_ids(true).await?;
         for set_id in all_sets {
             self.repository.unsync(&set_id).await?;

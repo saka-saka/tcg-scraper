@@ -1,4 +1,3 @@
-use super::error::Error;
 use crate::{
     domain::{PokemonCard, Rarity},
     pokemon_trainer_scraper::{PokemonTrainerSiteScraper, ThePTCGSet},
@@ -42,14 +41,14 @@ impl PokemonTrainer {
             })
             .await;
     }
-    pub async fn update_entire_pokemon_trainer_expansion(&self) -> Result<(), Error> {
+    pub async fn update_entire_pokemon_trainer_expansion(&self) -> Result<(), crate::error::Error> {
         let expansions = self.scraper.fetch_expansion().await?;
         for set in expansions {
             self.repository.upsert_pokemon_trainer_expansion(&set).await;
         }
         Ok(())
     }
-    pub async fn build_pokemon_trainer_fetchable(&self) -> Result<(), Error> {
+    pub async fn build_pokemon_trainer_fetchable(&self) -> Result<(), crate::error::Error> {
         let expansion_codes = self
             .repository
             .get_all_pokemon_trainer_expansion_code()
@@ -87,7 +86,7 @@ impl PokemonTrainer {
             self.repository.fetched(&code).await;
         }
     }
-    pub async fn list_all_expansions(&self) -> Result<Vec<ThePTCGSet>, Error> {
+    pub async fn list_all_expansions(&self) -> Result<Vec<ThePTCGSet>, crate::error::Error> {
         let expansions = self.scraper.fetch_expansion().await?;
         Ok(expansions)
     }
@@ -97,7 +96,7 @@ impl PokemonTrainer {
             self.repository.update_the_ptcg_rarity(ids, &rarity).await;
         }
     }
-    pub async fn export_pokemon_trainer(&self) -> Result<Vec<PokemonCard>, Error> {
+    pub async fn export_pokemon_trainer(&self) -> Result<Vec<PokemonCard>, crate::error::Error> {
         let all_cards = self.repository.get_all_pokemon_trainer_printing();
         Ok(all_cards.collect().await)
     }

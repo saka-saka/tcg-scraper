@@ -3,7 +3,7 @@ use crate::one_piece_scraper::{OnePieceCard, OnePieceCardRarity, OnePieceCardTyp
 use crate::pokemon_trainer_scraper::{ThePTCGCard, ThePTCGSet};
 use crate::yugioh_scraper::YugiohPrinting;
 use futures::stream::BoxStream;
-use futures::StreamExt;
+use futures::{StreamExt, TryStreamExt};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres, Transaction};
 
@@ -17,7 +17,7 @@ impl Repository {
         let pool = PgPoolOptions::new().connect_lazy(url).unwrap();
         Self { pool }
     }
-    pub async fn get_cardset_id(&self, set_ref: &str) -> Result<Option<String>, Error> {
+    pub async fn get_cardset_id(&self, set_ref: &str) -> Result<Option<String>, RepositoryError> {
         let record = sqlx::query!(
             "SELECT id FROM bigweb_pokemon_expansion WHERE code = $1",
             set_ref
@@ -26,7 +26,7 @@ impl Repository {
         .await?;
         Ok(record.map(|r| r.id.to_string()))
     }
-    pub async fn get_cardset_ids(&self, is_sync: bool) -> Result<Vec<String>, Error> {
+    pub async fn get_cardset_ids(&self, is_sync: bool) -> Result<Vec<String>, RepositoryError> {
         let cardset_ids: Vec<String> = sqlx::query!(
             "SELECT id FROM bigweb_pokemon_expansion WHERE is_sync = $1",
             is_sync
@@ -38,7 +38,7 @@ impl Repository {
         .collect();
         Ok(cardset_ids)
     }
-    pub async fn upsert_cardset(&self, cardset: &Cardset) -> Result<(), Error> {
+    pub async fn upsert_cardset(&self, cardset: &Cardset) -> Result<(), RepositoryError> {
         let cardset_id = cardset.url.cardset_id();
         let id = uuid::Uuid::from_slice(cardset_id.as_bytes()).unwrap();
         sqlx::query!(
@@ -55,7 +55,7 @@ impl Repository {
         .await?;
         Ok(())
     }
-    pub async fn fetch_all_cards(&self) -> Result<Vec<PokemonCard>, Error> {
+    pub async fn fetch_all_cards(&self) -> Result<Vec<PokemonCard>, RepositoryError> {
         let record = sqlx::query!(
             "SELECT
                 bpc.id,
@@ -112,7 +112,7 @@ impl Repository {
     //     }
     //     unimplemented!()
     // }
-    pub async fn fetch_card_ids(&self) -> Result<Vec<String>, Error> {
+    pub async fn fetch_card_ids(&self) -> Result<Vec<String>, RepositoryError> {
         let record = sqlx::query!(
             "SELECT id
             FROM bigweb_pokemon_printing
@@ -126,7 +126,7 @@ impl Repository {
         }
         Ok(ids)
     }
-    pub async fn image_downloaded(&self, id: &str) -> Result<(), Error> {
+    pub async fn image_downloaded(&self, id: &str) -> Result<(), RepositoryError> {
         let id = uuid::Uuid::from_slice(id.as_bytes()).unwrap();
         sqlx::query!(
             "UPDATE bigweb_pokemon_printing SET image_downloaded = true WHERE id = $1",
@@ -136,7 +136,10 @@ impl Repository {
         .await?;
         Ok(())
     }
-    pub async fn upsert_card(&self, card: &BigwebScrappedPokemonCard) -> Result<(), Error> {
+    pub async fn upsert_card(
+        &self,
+        card: &BigwebScrappedPokemonCard,
+    ) -> Result<(), RepositoryError> {
         let card_id = uuid::Uuid::from_slice(card.id.as_bytes()).unwrap();
         let set_id = uuid::Uuid::from_slice(card.set_id.as_bytes()).unwrap();
         sqlx::query!(
@@ -161,7 +164,7 @@ impl Repository {
         .await?;
         Ok(())
     }
-    pub async fn synced(&self, cardset_id: &str) -> Result<(), Error> {
+    pub async fn synced(&self, cardset_id: &str) -> Result<(), RepositoryError> {
         let cardset_id = uuid::Uuid::from_slice(cardset_id.as_bytes()).unwrap();
         sqlx::query!(
             "UPDATE bigweb_pokemon_expansion
@@ -173,7 +176,7 @@ impl Repository {
         .await?;
         Ok(())
     }
-    pub async fn unsync(&self, cardset_id: &str) -> Result<(), Error> {
+    pub async fn unsync(&self, cardset_id: &str) -> Result<(), RepositoryError> {
         let cardset_id = uuid::Uuid::from_slice(cardset_id.as_bytes()).unwrap();
         sqlx::query!(
             "UPDATE bigweb_pokemon_expansion
@@ -196,7 +199,9 @@ impl Repository {
         .await
         .unwrap();
     }
-    pub async fn get_all_pokemon_trainer_expansion_code(&self) -> Result<Vec<String>, Error> {
+    pub async fn get_all_pokemon_trainer_expansion_code(
+        &self,
+    ) -> Result<Vec<String>, RepositoryError> {
         let result = sqlx::query!("SELECT code FROM pokemon_trainer_expansion")
             .fetch_all(&self.pool)
             .await?;
@@ -343,7 +348,7 @@ impl Repository {
         .await
         .unwrap();
     }
-    pub async fn get_yugioh_printing(&self) -> Result<Vec<YugiohPrinting>, Error> {
+    pub async fn get_yugioh_printing(&self) -> Result<Vec<YugiohPrinting>, RepositoryError> {
         let printings = sqlx::query!("SELECT * FROM yugioh_printing_detail")
             .fetch_all(&self.pool)
             .await?
@@ -420,10 +425,49 @@ impl Repository {
         .await
         .unwrap();
     }
+    pub fn list_one_piece(&self) -> BoxStream<Result<OnePieceCard, RepositoryError>> {
+        sqlx::query_as!(
+            OnePieceCardDto,
+            r#"
+            SELECT code, name, img_src, rarity AS "rarity!: _", set_name, type AS "type!: _", get_info
+            FROM one_piece
+            "#,
+        )
+        .fetch(&self.pool)
+        .map_ok(|c|c.into())
+        .map_err(|e|e.into())
+        .boxed()
+    }
+}
+
+#[derive(Debug)]
+pub struct OnePieceCardDto {
+    pub name: String,
+    pub code: String,
+    pub img_src: String,
+    pub rarity: OnePieceCardRarity,
+    pub set_name: String,
+    pub r#type: OnePieceCardType,
+    pub get_info: String,
+}
+
+impl From<OnePieceCardDto> for OnePieceCard {
+    fn from(value: OnePieceCardDto) -> Self {
+        Self {
+            name: value.name,
+            code: value.code,
+            img_src: value.img_src,
+            rarity: value.rarity,
+            set_name: value.set_name,
+            r#type: value.r#type,
+            get_info: value.get_info,
+            last_fetched_at: LastFetchedAt::default(),
+        }
+    }
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum Error {
+pub enum RepositoryError {
     #[error("backend error")]
     BackendError(#[from] sqlx::Error),
 }
