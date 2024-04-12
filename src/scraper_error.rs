@@ -17,6 +17,8 @@ pub enum Error {
     NewSession(#[from] NewSessionError),
     #[error("CmdError")]
     Cmd(#[from] CmdError),
+    #[error("reqwest error {0}")]
+    Reqwest(#[from] reqwest::Error),
 }
 
 #[derive(Debug, thiserror::Error)]

@@ -17,3 +17,8 @@ pub(crate) enum Error {
     #[error("set is not exist {0}")]
     SetNotExists(String),
 }
+
+#[derive(Debug)]
+pub enum ErrorCode {
+    RarityNotExists,
+}

@@ -1,11 +1,10 @@
-use futures::TryStreamExt;
-
 use crate::{
     error::Error,
     one_piece_csv::{OnePieceCsv, OnePieceProductsCsv},
     one_piece_scraper::OnePieceScraper,
     repository::Repository,
 };
+use futures::TryStreamExt;
 
 use super::download;
 
@@ -30,7 +29,7 @@ impl OnePiece {
     pub async fn scrape_one_piece(&self) -> Result<(), Error> {
         let sets = self.scraper.set().await?;
         for set in sets {
-            for card in self.scraper.scrape_cards(&set).await.unwrap() {
+            for card in self.scraper.scrape_cards(&set).await? {
                 self.repository.upsert_one_piece(card.unwrap()).await;
             }
         }

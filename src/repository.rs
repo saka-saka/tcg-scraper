@@ -207,7 +207,11 @@ impl Repository {
             .await?;
         Ok(result.into_iter().map(|a| a.code).collect())
     }
-    pub async fn upsert_fetchable(&self, fetchable_codes: Vec<String>, set_code: &str) {
+    pub async fn upsert_fetchable(
+        &self,
+        fetchable_codes: Vec<String>,
+        set_code: &str,
+    ) -> Result<(), RepositoryError> {
         for code in fetchable_codes {
             sqlx::query!(
                 "INSERT INTO pokemon_trainer_fetchable_card(code, fetched, expansion_code) VALUES($1, False, $2)
@@ -218,25 +222,22 @@ impl Repository {
                 set_code
             )
             .execute(&self.pool)
-            .await
-            .unwrap();
+            .await?;
         }
+        Ok(())
     }
-    pub async fn get_fetchable(&self) -> Vec<(String, String)> {
-        let fetchables = sqlx::query!(
+    pub fn get_fetchable(&self) -> BoxStream<Result<(String, String), RepositoryError>> {
+        sqlx::query!(
             "SELECT fetchable.code, fetchable.expansion_code
             FROM pokemon_trainer_fetchable_card fetchable
-            LEFT JOIN pokemon_trainer_printing printing ON fetchable.code = printing.code
+            INNER JOIN pokemon_trainer_printing printing ON fetchable.code = printing.code
             WHERE printing.name is NULL
-            LIMIT 10"
+            "
         )
-        .fetch_all(&self.pool)
-        .await
-        .unwrap();
-        fetchables
-            .into_iter()
-            .map(|s| (s.code, s.expansion_code))
-            .collect()
+        .fetch(&self.pool)
+        .map_ok(|s| (s.code, s.expansion_code))
+        .map_err(RepositoryError::from)
+        .boxed()
     }
     pub async fn upsert_the_ptcg_card(&self, card: &ThePTCGCard) {
         sqlx::query!(
@@ -266,17 +267,19 @@ impl Repository {
         .await
         .unwrap();
     }
-    pub async fn update_the_ptcg_rarity(&self, ids: Vec<String>, rarity: &Rarity) {
-        for id in ids {
-            sqlx::query!(
-                "UPDATE pokemon_trainer_printing SET rarity = $1 WHERE code = $2",
-                rarity.to_string(),
-                id
-            )
-            .execute(&self.pool)
-            .await
-            .unwrap();
-        }
+    pub async fn update_the_ptcg_rarity(
+        &self,
+        ids: Vec<String>,
+        rarity: &Rarity,
+    ) -> Result<(), RepositoryError> {
+        sqlx::query!(
+            "UPDATE pokemon_trainer_printing SET rarity = $1 WHERE code = ANY($2)",
+            rarity.to_string(),
+            &ids
+        )
+        .execute(&self.pool)
+        .await?;
+        Ok(())
     }
     pub async fn upsert_yugioh_expansion_link(&self, url: &str) {
         sqlx::query!(
@@ -368,10 +371,11 @@ impl Repository {
         Ok(printings)
     }
 
-    pub(crate) fn get_ptcg_codes(&self) -> BoxStream<String> {
+    pub(crate) fn get_ptcg_codes(&self) -> BoxStream<Result<String, RepositoryError>> {
         sqlx::query!("SELECT code FROM pokemon_trainer_printing")
             .fetch(&self.pool)
-            .filter_map(|r| async { Some(r.ok()?.code) })
+            .map_ok(|c| c.code)
+            .map_err(|e| e.into())
             .boxed()
     }
 

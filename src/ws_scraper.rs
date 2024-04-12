@@ -1,6 +1,6 @@
 use scraper::Selector;
 
-use crate::domain::LastFetchedAt;
+use crate::{domain::LastFetchedAt, error::ErrorCode};
 
 pub(crate) struct WsScraper {}
 impl WsScraper {
@@ -72,9 +72,4 @@ pub struct WsCard {
     pub rarity: Option<String>,
     pub set_name: String,
     pub last_fetched_at: LastFetchedAt,
-}
-
-#[derive(Debug)]
-pub enum ErrorCode {
-    RarityNotExists,
 }

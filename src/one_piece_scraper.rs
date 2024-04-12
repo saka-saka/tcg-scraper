@@ -5,7 +5,10 @@ use serde::Deserialize;
 use serde_json::json;
 use strum_macros::AsRefStr;
 
-use crate::{domain::LastFetchedAt, error::Error};
+use crate::{
+    domain::LastFetchedAt,
+    error::{Error, ErrorCode},
+};
 const BASEURL: &'static str = "https://www.onepiece-cardgame.com";
 
 pub(crate) struct OnePieceScraper {}
@@ -183,9 +186,4 @@ pub enum OnePieceCardRarity {
 pub struct OnePieceProduct {
     pub title: String,
     pub date: String,
-}
-
-#[derive(Debug)]
-pub enum ErrorCode {
-    RarityNotExists,
 }

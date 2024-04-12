@@ -41,7 +41,6 @@ enum Commands {
         set: Option<String>,
     },
     DownloadImage,
-    PTCGScraper,
     ExportCard {
         #[arg(short, long)]
         all: bool,
@@ -62,6 +61,8 @@ enum Commands {
 #[derive(Subcommand)]
 enum PokemonTrainerCommands {
     Run,
+    ExportCsv,
+    List,
 }
 
 #[derive(Subcommand)]
@@ -131,18 +132,24 @@ async fn main() -> Result<()> {
                 wtr.flush()?;
             }
         }
-        Some(Commands::PTCGScraper) => {
-            let expansions = application
-                .pokemon_trainer()
-                .list_all_expansions()
-                .await
-                .unwrap();
-            println!("{expansions:#?}")
-        }
         Some(Commands::PokemonTrainer(commands)) => match commands {
             PokemonTrainerCommands::Run => {
                 let pokemon_trainer = application.pokemon_trainer();
-                pokemon_trainer.update_pokemon_trainer_printing().await;
+                pokemon_trainer
+                    .update_entire_pokemon_trainer_expansion()
+                    .await?;
+                pokemon_trainer.build_pokemon_trainer_fetchable().await?;
+                pokemon_trainer.update_pokemon_trainer_printing().await?;
+                pokemon_trainer.update_rarity().await?;
+                pokemon_trainer.download_all_image().await?;
+            }
+            PokemonTrainerCommands::ExportCsv => {
+                let pokemon_trainer = application.pokemon_trainer();
+                pokemon_trainer.export_pokemon_trainer().await?;
+            }
+            PokemonTrainerCommands::List => {
+                let expansions = application.pokemon_trainer().list_all_expansions().await?;
+                println!("{expansions:#?}");
             }
         },
         Some(Commands::DownloadImage) => {

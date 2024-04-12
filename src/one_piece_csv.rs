@@ -59,7 +59,7 @@ impl From<OnePieceProduct> for OnePieceProductsCsv {
 impl From<OnePieceCard> for OnePieceCsv {
     fn from(value: OnePieceCard) -> Self {
         let code = value.code.clone();
-        let (set_code, card_number) = code.split_once('-').unwrap();
+        let (set_code, _card_number) = code.split_once('-').unwrap();
         let reference = Some(set_code.to_owned());
         let remark9 = Some(set_code.to_owned());
         OnePieceCsv {

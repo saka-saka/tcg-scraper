@@ -1,22 +1,10 @@
-use fantoccini::wd::Capabilities;
 use scraper::Selector;
 
-pub(crate) struct LimitlessScraper {
-    cap: Capabilities,
-    url: String,
-}
+pub(crate) struct LimitlessScraper {}
 
 impl LimitlessScraper {
     pub fn new() -> Self {
-        let mut cap = Capabilities::new();
-        cap.insert(
-            "moz:firefoxOptions".to_string(),
-            serde_json::json!({"args": ["--headless"]}),
-        );
-        Self {
-            cap,
-            url: "http://localhost:4444".to_string(),
-        }
+        Self {}
     }
     pub async fn poc(&self) {
         // let url = "https://limitlesstcg.com/cards/jp";
