@@ -60,6 +60,7 @@ enum Commands {
 
 #[derive(Subcommand)]
 enum PokemonTrainerCommands {
+    Prepare,
     Run,
     ExportCsv,
     List,
@@ -133,15 +134,18 @@ async fn main() -> Result<()> {
             }
         }
         Some(Commands::PokemonTrainer(commands)) => match commands {
+            PokemonTrainerCommands::Prepare => {
+                let pokemon_trainer = application.pokemon_trainer();
+                pokemon_trainer
+                    .update_entire_pokemon_trainer_expansion()
+                    .await?;
+                pokemon_trainer.build_pokemon_trainer_fetchable().await?;
+                pokemon_trainer.update_pokemon_trainer_printing().await?;
+                pokemon_trainer.download_all_image().await?;
+            }
             PokemonTrainerCommands::Run => {
                 let pokemon_trainer = application.pokemon_trainer();
-                // pokemon_trainer
-                //     .update_entire_pokemon_trainer_expansion()
-                //     .await?;
-                // pokemon_trainer.build_pokemon_trainer_fetchable().await?;
-                // pokemon_trainer.update_pokemon_trainer_printing().await?;
                 pokemon_trainer.update_rarity().await?;
-                // pokemon_trainer.download_all_image().await?;
             }
             PokemonTrainerCommands::ExportCsv => {
                 let pokemon_trainer = application.pokemon_trainer();

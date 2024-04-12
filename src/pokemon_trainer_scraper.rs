@@ -192,12 +192,14 @@ impl PokemonTrainerSiteScraper {
             Rarity::SR => 8,
             Rarity::HR => 9,
             Rarity::UR => 10,
+            Rarity::Unknown(_) => 11,
             Rarity::K => 12,
             Rarity::A => 13,
             Rarity::AR => 14,
             Rarity::SAR => 15,
+            Rarity::S => 16,
+            Rarity::SSR => 17,
             Rarity::ACE => 18,
-            Rarity::Unknown(_) => 11,
             _ => 0,
         };
         let mut ids = vec![];

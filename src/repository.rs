@@ -272,6 +272,7 @@ impl Repository {
         ids: Vec<String>,
         rarity: &Rarity,
     ) -> Result<(), RepositoryError> {
+        dbg!(rarity.to_string());
         sqlx::query!(
             "UPDATE pokemon_trainer_printing SET rarity = $1 WHERE code = ANY($2)",
             rarity.to_string(),

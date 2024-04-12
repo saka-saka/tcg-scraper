@@ -164,7 +164,7 @@ pub enum Rarity {
     C,
     TR,
     TD,
-    #[strum(default)]
+    #[strum(default, to_string = "Unknown")]
     Unknown(String),
 }
 
