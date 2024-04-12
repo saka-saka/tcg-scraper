@@ -144,6 +144,7 @@ pub enum Rarity {
     #[default]
     UR,
     SSR,
+    ACE,
     HR,
     SR,
     SAR,

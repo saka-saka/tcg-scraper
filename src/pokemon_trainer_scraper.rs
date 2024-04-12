@@ -181,7 +181,7 @@ impl PokemonTrainerSiteScraper {
         Ok(card)
     }
     pub async fn rarity_ids(&self, rarity: &Rarity) -> Result<Vec<String>, Error> {
-        let rarity = match rarity {
+        let rarity_label_number = match rarity {
             Rarity::C => 1,
             Rarity::U => 2,
             Rarity::R => 3,
@@ -196,19 +196,19 @@ impl PokemonTrainerSiteScraper {
             Rarity::A => 13,
             Rarity::AR => 14,
             Rarity::SAR => 15,
+            Rarity::ACE => 18,
             Rarity::Unknown(_) => 11,
             _ => 0,
         };
         let mut ids = vec![];
         let mut page_num = 1;
         loop {
-            let url = format!("https://asia.pokemon-card.com/tw/card-search/list/?pageNo={}&sortCondition=&keyword=&cardType=all&regulation=all&pokemonEnergy=&pokemonWeakness=&pokemonResistance=&pokemonMoveEnergy=&hpLowerLimit=none&hpUpperLimit=none&retreatCostLowerLimit=0&retreatCostUpperLimit=none&rarity%5B0%5D={}&illustratorName=&expansionCodes=", page_num, rarity);
+            let url = format!("https://asia.pokemon-card.com/tw/card-search/list/?pageNo={}&sortCondition=&keyword=&cardType=all&regulation=all&pokemonEnergy=&pokemonWeakness=&pokemonResistance=&pokemonMoveEnergy=&hpLowerLimit=none&hpUpperLimit=none&retreatCostLowerLimit=0&retreatCostUpperLimit=none&rarity%5B0%5D={}&illustratorName=&expansionCodes=", page_num, rarity_label_number);
             let source = Self::get_source(&url).await?;
             let document = scraper::Html::parse_document(&source);
             let selector = &Selector::parse("#noResult").unwrap();
             let selection = document.select(selector);
             let count = selection.count();
-            println!("{count}");
             if count != 0 {
                 break;
             }
