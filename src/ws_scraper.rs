@@ -29,7 +29,7 @@ impl WsScraper {
                 let card_name = spans.next().unwrap();
                 let card_no = spans.next().unwrap().inner_html();
                 let a = card_no.clone();
-                let (set_code, _) = a.split_once("/").unwrap();
+                let (set_code, _) = a.split_once('/').unwrap();
                 let selector = &Selector::parse("img").unwrap();
                 let img_src = tr
                     .select(selector)
@@ -53,7 +53,7 @@ impl WsScraper {
                     series: set_code.to_string(),
                     img_src: img_src.to_owned(),
                     rarity,
-                    set_name: set_name.to_string().replacen("-", "", 1),
+                    set_name: set_name.to_string().replacen('-', "", 1),
                     last_fetched_at,
                 };
                 results.push(Ok(card))

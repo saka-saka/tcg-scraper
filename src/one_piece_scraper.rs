@@ -27,7 +27,7 @@ impl OnePieceScraper {
         let option_selector = &Selector::parse("#series option").unwrap();
         for option in document.select(option_selector) {
             let v = option.value().attr("value").unwrap();
-            if v.len() != 0 {
+            if !v.is_empty() {
                 results.push(v.to_string());
             }
         }
@@ -42,7 +42,7 @@ impl OnePieceScraper {
         for product_detail in document.select(selector) {
             let selector = &Selector::parse("dd.productsCategory a").unwrap();
             let category = product_detail.select(selector).next().unwrap().inner_html();
-            if category != String::from("BOOSTERS") && category != String::from("DECKS") {
+            if category != *"BOOSTERS" && category != *"DECKS" {
                 continue;
             }
             let selector = &Selector::parse("dt.productsTit span").unwrap();
@@ -53,8 +53,7 @@ impl OnePieceScraper {
                 .next()
                 .unwrap()
                 .text()
-                .skip(2)
-                .next()
+                .nth(2)
                 .unwrap();
             results.push(OnePieceProduct {
                 title,
@@ -78,7 +77,7 @@ impl OnePieceScraper {
         let document = scraper::Html::parse_document(&source);
         let set_name_selector = &Selector::parse("#series option").unwrap();
         let set_name = document
-            .select(&set_name_selector)
+            .select(set_name_selector)
             .skip_while(|e| e.value().attr("selected").is_none())
             .next()
             .unwrap()
@@ -92,24 +91,17 @@ impl OnePieceScraper {
                 .next()
                 .unwrap()
                 .text()
-                .skip(1)
-                .next()
+                .nth(1)
                 .unwrap()
                 .trim();
             let card_name_selector = &Selector::parse("dt .cardName").unwrap();
             let card_name = dl.select(card_name_selector).next().unwrap().inner_html();
             let code_selector = &Selector::parse("dt .infoCol span").unwrap();
-            let rarity = dl
-                .select(code_selector)
-                .skip(1)
-                .next()
-                .unwrap()
-                .inner_html();
+            let rarity = dl.select(code_selector).nth(1).unwrap().inner_html();
             let rarity = serde_json::from_value(json!(&rarity))?;
             let card_type = dl
                 .select(code_selector)
-                .skip(2)
-                .next()
+                .nth(2)
                 .unwrap()
                 .inner_html()
                 .trim()
@@ -174,6 +166,7 @@ pub enum OnePieceCardRarity {
     #[serde(alias = "SP卡", alias = "SPカード")]
     SP,
     R,
+    #[allow(clippy::upper_case_acronyms)]
     SEC,
     C,
     P,
