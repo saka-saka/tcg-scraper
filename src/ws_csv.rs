@@ -1,48 +1,10 @@
-use crate::ws_scraper::WsCard;
+use crate::{export_csv::ExportCsv, ws_scraper::WsCard};
 use lazy_static::lazy_static;
 use regex::Regex;
-use serde::Serialize;
 
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "PascalCase")]
-pub struct WsCSV {
-    product_id: Option<String>,
-    brand: Option<String>,
-    set: Option<String>,
-    edition: Option<String>,
-    series: Option<String>,
-    rarity: Option<String>,
-    material: Option<String>,
-    release_year: Option<String>,
-    language: Option<String>,
-    card_name_english: Option<String>,
-    card_name_chinese: Option<String>,
-    card_name_japanese: Option<String>,
-    card_number: Option<String>,
-    image: Option<String>,
-    value: Option<String>,
-    reference: Option<String>,
-    remark: Option<String>,
-    remark1: Option<String>,
-    remark2: Option<String>,
-    remark3: Option<String>,
-    remark4: Option<String>,
-    remark5: Option<String>,
-    remark6: Option<String>,
-    remark7: Option<String>,
-    remark8: Option<String>,
-    remark9: Option<String>,
-    remark10: Option<String>,
-    enable: Option<String>,
-    #[serde(rename(serialize = "P_Language"))]
-    p_language: Option<String>,
-    #[serde(rename(serialize = "id"))]
-    id: Option<String>,
-}
-
-impl From<WsCard> for WsCSV {
+impl From<WsCard> for ExportCsv {
     fn from(value: WsCard) -> Self {
-        WsCSV {
+        ExportCsv {
             product_id: None,
             brand: Some(String::from("Weiβ Schwarz")),
             set: Some(sanitize(&value.set_name)),

@@ -1,44 +1,10 @@
-use crate::one_piece_scraper::{OnePieceCard, OnePieceProduct};
+use crate::{
+    export_csv::ExportCsv,
+    one_piece_scraper::{OnePieceCard, OnePieceProduct},
+};
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::Serialize;
-
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "PascalCase")]
-pub struct OnePieceCsv {
-    product_id: Option<String>,
-    brand: Option<String>,
-    set: Option<String>,
-    edition: Option<String>,
-    series: Option<String>,
-    rarity: Option<String>,
-    material: Option<String>,
-    release_year: Option<String>,
-    language: Option<String>,
-    card_name_english: Option<String>,
-    card_name_chinese: Option<String>,
-    card_name_japanese: Option<String>,
-    card_number: Option<String>,
-    image: Option<String>,
-    value: Option<String>,
-    reference: Option<String>,
-    remark: Option<String>,
-    remark1: Option<String>,
-    remark2: Option<String>,
-    remark3: Option<String>,
-    remark4: Option<String>,
-    remark5: Option<String>,
-    remark6: Option<String>,
-    remark7: Option<String>,
-    remark8: Option<String>,
-    remark9: Option<String>,
-    remark10: Option<String>,
-    enable: Option<String>,
-    #[serde(rename(serialize = "P_Language"))]
-    p_language: Option<String>,
-    #[serde(rename(serialize = "id"))]
-    id: Option<String>,
-}
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "PascalCase")]
@@ -56,13 +22,13 @@ impl From<OnePieceProduct> for OnePieceProductsCsv {
     }
 }
 
-impl From<OnePieceCard> for OnePieceCsv {
+impl From<OnePieceCard> for ExportCsv {
     fn from(value: OnePieceCard) -> Self {
         let code = value.code.clone();
         let (set_code, _card_number) = code.split_once('-').unwrap();
         let reference = Some(set_code.to_owned());
         let remark9 = Some(set_code.to_owned());
-        OnePieceCsv {
+        Self {
             product_id: None,
             brand: Some(String::from("One Piece")),
             set: Some(sanitize(&value.set_name)),

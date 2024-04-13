@@ -2,6 +2,7 @@ mod application;
 mod bigweb_scraper;
 mod domain;
 mod error;
+mod export_csv;
 mod limitless_scraper;
 mod one_piece_csv;
 mod one_piece_scraper;
@@ -18,7 +19,7 @@ use application::Application;
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::Result;
 use dotenvy::dotenv;
-use pokemon_csv::PokemonCSV;
+use export_csv::ExportCsv;
 use std::{thread::sleep, time::Duration};
 use tracing::Level;
 
@@ -127,7 +128,7 @@ async fn main() -> Result<()> {
                 let all_cards = application.export_entire_card_db().await?;
                 let mut wtr = csv::Writer::from_writer(std::io::stdout());
                 for card in all_cards {
-                    let csv_card: PokemonCSV = card.into();
+                    let csv_card: ExportCsv = card.into();
                     wtr.serialize(csv_card)?;
                 }
                 wtr.flush()?;
@@ -149,7 +150,7 @@ async fn main() -> Result<()> {
             }
             PokemonTrainerCommands::ExportCsv => {
                 let pokemon_trainer = application.pokemon_trainer();
-                pokemon_trainer.export_pokemon_trainer().await?;
+                let _all_cards = pokemon_trainer.export_pokemon_trainer().await?;
             }
             PokemonTrainerCommands::List => {
                 let expansions = application.pokemon_trainer().list_all_expansions().await?;
