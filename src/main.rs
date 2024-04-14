@@ -31,6 +31,8 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    #[command(subcommand)]
+    Bigweb(BigwebCommands),
     UpdateCardset {
         #[arg(short, long)]
         all: bool,
@@ -57,6 +59,11 @@ enum Commands {
     #[command(subcommand)]
     Limitless(LimitlessCommands),
     ResyncAll,
+}
+
+#[derive(Subcommand)]
+enum BigwebCommands {
+    Cardsets,
 }
 
 #[derive(Subcommand)]
@@ -107,6 +114,10 @@ async fn main() -> Result<()> {
         .finish();
 
     match &cli.command {
+        Commands::Bigweb(BigwebCommands::Cardsets) => {
+            let bigweb = application.bigweb()?;
+            bigweb.update_entire_cardset_db().await?;
+        }
         Commands::UpdateCard { all, set } => {
             if let Some(all) = all {
                 if *all {
@@ -120,7 +131,8 @@ async fn main() -> Result<()> {
         }
         Commands::UpdateCardset { all } => {
             if *all {
-                application.update_entire_cardset_db().await?;
+                let bigweb = application.bigweb()?;
+                bigweb.update_entire_cardset_db().await?;
             }
         }
         Commands::ExportCard { all } => {

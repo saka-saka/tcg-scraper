@@ -1,8 +1,10 @@
+use super::bigweb::Bigweb;
 use super::one_piece::OnePiece;
 use super::ws::Ws;
 use super::yugioh::Yugioh;
 use crate::bigweb_scraper::BigwebScraper;
 use crate::domain::{CardsetURL, PokemonCard};
+use crate::error::Error;
 use crate::limitless_scraper::LimitlessScraper;
 use crate::repository::Repository;
 use crate::ws_scraper::WsScraper;
@@ -60,6 +62,13 @@ impl Application {
             repository: self.repository.clone(),
         }
     }
+    pub fn bigweb(&self) -> Result<Bigweb, Error> {
+        let scraper = BigwebScraper::new()?;
+        Ok(Bigweb {
+            scraper,
+            repository: self.repository.clone(),
+        })
+    }
     pub async fn download_image(&self) -> Result<(), crate::error::Error> {
         let all_cards = self.repository.fetch_card_ids().await.unwrap();
         let client = reqwest::Client::new();
@@ -81,27 +90,6 @@ impl Application {
             let bytes = result.bytes().await.unwrap();
             let _ = file.write(&bytes)?;
             self.repository.image_downloaded(&card).await.unwrap();
-        }
-        Ok(())
-    }
-    pub async fn update_entire_cardset_db(&self) -> Result<(), crate::error::Error> {
-        let pokemon_cardsets = &self.bigweb_scraper.fetch_pokemon_cardset()?;
-        let (sets, errs): (Vec<_>, Vec<_>) =
-            pokemon_cardsets
-                .iter()
-                .fold((vec![], vec![]), |mut acc, elem| {
-                    match elem {
-                        Ok(result) => acc.0.push(result),
-                        Err(err) => acc.1.push(err),
-                    };
-                    acc
-                });
-        for err in errs {
-            error!(?err)
-        }
-        for cardset in sets {
-            debug!(?cardset);
-            self.repository.upsert_cardset(cardset).await?;
         }
         Ok(())
     }

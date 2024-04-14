@@ -3,6 +3,7 @@ use crate::domain::{
     CardsetURL, DescriptionTitle, LinkTitle, Price, Rarity,
 };
 use crate::scraper_error::{DataError, Error};
+use fantoccini::wd::Capabilities;
 use headless_chrome::{Browser, LaunchOptions};
 use scraper::Selector;
 use std::{thread::sleep, time::Duration};
@@ -11,6 +12,8 @@ const BIGWEB_POKEMON_URL: &str =
     "https://www.bigweb.co.jp/ja/products/%E3%83%9D%E3%82%B1%E3%83%A2%E3%83%B3/list?cardsets=7615";
 
 pub struct BigwebScraper {
+    cap: Capabilities,
+    url: String,
     browser: Browser,
 }
 
@@ -22,7 +25,16 @@ impl BigwebScraper {
             .build()
             .map_err(|err| Error::BrowserBackend(err.to_string()))?;
         let browser = Browser::new(option).map_err(|err| Error::BrowserBackend(err.to_string()))?;
-        Ok(Self { browser })
+        let mut cap = Capabilities::new();
+        cap.insert(
+            "moz:firefoxOptions".to_string(),
+            serde_json::json!({"args": ["--headless"]}),
+        );
+        Ok(Self {
+            browser,
+            cap,
+            url: "http://localhost:4444".to_string(),
+        })
     }
     pub fn fetch_pokemon_cardset(&self) -> Result<Vec<Result<Cardset, DataError>>, Error> {
         let tab = self
