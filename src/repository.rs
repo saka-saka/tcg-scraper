@@ -1,6 +1,7 @@
 use crate::domain::{BigwebScrappedPokemonCard, Cardset, LastFetchedAt, PokemonCard, Rarity};
 use crate::one_piece_scraper::{OnePieceCard, OnePieceCardRarity, OnePieceCardType};
 use crate::pokemon_trainer_scraper::{ThePTCGCard, ThePTCGSet};
+use crate::ws_scraper::WsCard;
 use crate::yugioh_scraper::YugiohPrinting;
 use futures::stream::BoxStream;
 use futures::{StreamExt, TryStreamExt};
@@ -442,6 +443,84 @@ impl Repository {
         .map_ok(|c|c.into())
         .map_err(|e|e.into())
         .boxed()
+    }
+    pub async fn get_ws_progress(&self) -> Result<i32, RepositoryError> {
+        let record = sqlx::query!(
+            "SELECT current_page FROM ws_progress WHERE id = (SELECT id FROM ws_progress_id_seq)"
+        )
+        .fetch_one(&self.pool)
+        .await?;
+        Ok(record.current_page)
+    }
+    pub async fn update_ws_progress(&self, current_page: i32) -> Result<(), RepositoryError> {
+        sqlx::query!("UPDATE ws_progress SET current_page = $1 WHERE id = (SELECT id FROM ws_progress_id_seq)", current_page)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+    pub async fn save_ws_cards(&self, cards: Vec<WsCard>) -> Result<(), RepositoryError> {
+        let unzipped = cards.into_iter().fold(
+            (vec![], vec![], vec![], vec![], vec![], vec![]),
+            |mut acc, card| {
+                acc.0.push(card.code);
+                acc.1.push(card.name);
+                acc.2.push(card.set_code);
+                acc.3.push(card.img_src);
+                acc.4.push(card.rarity.unwrap_or("UNKNOWN".to_string()));
+                acc.5.push(card.set_name);
+                acc
+            },
+        );
+        sqlx::query!(
+            "
+            INSERT INTO ws_cards(code, name, set_code, img_src, rarity, set_name)
+            SELECT *
+            FROM UNNEST($1::TEXT[], $2::TEXT[], $3::TEXT[], $4::TEXT[], $5::TEXT[], $6::TEXT[])
+            ",
+            &unzipped.0,
+            &unzipped.1,
+            &unzipped.2,
+            &unzipped.3,
+            &unzipped.4,
+            &unzipped.5
+        )
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+    pub fn get_ws_cards(&self) -> BoxStream<Result<WsCard, RepositoryError>> {
+        sqlx::query_as!(
+            WsCardDto,
+            "SELECT code, name, set_code, img_src, rarity, set_name FROM ws_cards"
+        )
+        .fetch(&self.pool)
+        .map_ok(|dto| dto.into())
+        .map_err(RepositoryError::from)
+        .boxed()
+    }
+}
+
+#[derive(Debug)]
+pub struct WsCardDto {
+    pub name: String,
+    pub code: String,
+    pub set_code: String,
+    pub img_src: String,
+    pub rarity: Option<String>,
+    pub set_name: String,
+}
+
+impl From<WsCardDto> for WsCard {
+    fn from(value: WsCardDto) -> Self {
+        Self {
+            name: value.name,
+            code: value.code,
+            set_code: value.set_code,
+            img_src: value.img_src,
+            rarity: value.rarity,
+            set_name: value.set_name,
+            last_fetched_at: LastFetchedAt::default(),
+        }
     }
 }
 

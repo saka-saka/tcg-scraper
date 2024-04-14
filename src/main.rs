@@ -194,10 +194,13 @@ async fn main() -> Result<()> {
                 .await;
         }
         Some(Commands::Ws(WsCommands::Scrape)) => {
-            application.scrape_ws().await;
+            let ws = application.ws();
+            ws.ws_scrape().await?;
         }
         Some(Commands::Ws(WsCommands::ExportCsv)) => {
-            application.export_ws_csv(std::io::stdout()).await;
+            let wtr = std::io::stdout();
+            let ws = application.ws();
+            ws.ws_export_csv(wtr).await?;
         }
         Some(Commands::OnePiece(OnePieceCommands::Scrape)) => {
             application.one_piece().scrape_one_piece().await?;

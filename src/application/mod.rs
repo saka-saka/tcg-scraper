@@ -1,6 +1,7 @@
 mod application;
 mod one_piece;
 mod pokemon;
+mod ws;
 mod yugioh;
 
 use std::{io::Write, path::Path};

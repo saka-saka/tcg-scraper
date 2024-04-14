@@ -1,8 +1,6 @@
 use crate::{
-    error::Error,
-    one_piece_csv::{OnePieceCsv, OnePieceProductsCsv},
-    one_piece_scraper::OnePieceScraper,
-    repository::Repository,
+    error::Error, export_csv::ExportCsv, one_piece_csv::OnePieceProductsCsv,
+    one_piece_scraper::OnePieceScraper, repository::Repository,
 };
 use futures::TryStreamExt;
 
@@ -54,7 +52,7 @@ impl OnePiece {
         let mut wtr = csv::Writer::from_writer(w);
         for set in sets {
             for card in self.scraper.scrape_cards(&set).await? {
-                let c: OnePieceCsv = card.unwrap().into();
+                let c: ExportCsv = card.unwrap().into();
                 wtr.serialize(c).unwrap();
             }
         }

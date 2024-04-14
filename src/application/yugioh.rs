@@ -1,4 +1,4 @@
-use crate::{repository::Repository, yugioh_csv::YugiohCsv, yugioh_scraper::YugiohScraper};
+use crate::{export_csv::ExportCsv, repository::Repository, yugioh_scraper::YugiohScraper};
 
 pub struct Yugioh {
     pub scraper: YugiohScraper,
@@ -43,7 +43,7 @@ impl Yugioh {
     pub async fn export_yugioh_printing_detail<W: std::io::Write>(&self, w: W) {
         let mut wtr = csv::Writer::from_writer(w);
         for printing in self.repository.get_yugioh_printing().await.unwrap() {
-            let p: YugiohCsv = printing.into();
+            let p: ExportCsv = printing.into();
             wtr.serialize(p).unwrap();
         }
         wtr.flush().unwrap();

@@ -1,10 +1,10 @@
 use super::one_piece::OnePiece;
+use super::ws::Ws;
 use super::yugioh::Yugioh;
 use crate::bigweb_scraper::BigwebScraper;
 use crate::domain::{CardsetURL, PokemonCard};
 use crate::limitless_scraper::LimitlessScraper;
 use crate::repository::Repository;
-use crate::ws_csv::WsCSV;
 use crate::ws_scraper::WsScraper;
 use crate::yugioh_scraper::YugiohScraper;
 use crate::{
@@ -18,7 +18,6 @@ use super::pokemon::PokemonTrainer;
 pub struct Application {
     bigweb_scraper: BigwebScraper,
     repository: Repository,
-    ws_scraper: WsScraper,
     limitless_scraper: LimitlessScraper,
 }
 
@@ -26,12 +25,10 @@ impl Application {
     pub fn new(url: &str) -> Self {
         let bigweb_scraper = BigwebScraper::new().unwrap();
         let repository = Repository::new(url);
-        let ws_scraper = WsScraper {};
         let limitless_scraper = LimitlessScraper::new();
         Self {
             bigweb_scraper,
             repository,
-            ws_scraper,
             limitless_scraper,
         }
     }
@@ -56,9 +53,11 @@ impl Application {
             repository: self.repository.clone(),
         }
     }
-    pub async fn scrape_ws(&self) {
-        for result in &self.ws_scraper.scrape().await {
-            println!("{result:#?}");
+    pub fn ws(&self) -> Ws {
+        let scraper = WsScraper {};
+        Ws {
+            scraper,
+            repository: self.repository.clone(),
         }
     }
     pub async fn download_image(&self) -> Result<(), crate::error::Error> {
@@ -161,18 +160,6 @@ impl Application {
             self.repository.unsync(&set_id).await?;
         }
         Ok(())
-    }
-    pub async fn export_ws_csv<W: std::io::Write>(&self, w: W) {
-        let mut wtr = csv::Writer::from_writer(w);
-        for card in self.ws_scraper.scrape().await {
-            let c: WsCSV = card.unwrap().into();
-            wtr.serialize(c).unwrap();
-        }
-        // for printing in self.repository.get_yugioh_printing().await.unwrap() {
-        //     let p: YugiohCsv = printing.into();
-        //     wtr.serialize(p).unwrap();
-        // }
-        wtr.flush().unwrap();
     }
     pub async fn poc(&self) {
         self.limitless_scraper.poc().await;

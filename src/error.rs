@@ -1,3 +1,5 @@
+use std::num::ParseIntError;
+
 use crate::repository::RepositoryError;
 
 #[derive(thiserror::Error, Debug)]
@@ -16,6 +18,12 @@ pub(crate) enum Error {
     Scraper(#[from] crate::scraper_error::Error),
     #[error("set is not exist {0}")]
     SetNotExists(String),
+    #[error("field missing {0}")]
+    FieldMissing(String),
+    #[error("ParseInt error {0}")]
+    ParseInt(#[from] ParseIntError),
+    #[error("csv error {0}")]
+    Csv(#[from] csv::Error),
 }
 
 #[derive(Debug)]
