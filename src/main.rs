@@ -26,7 +26,7 @@ use tracing::Level;
 #[derive(Parser)]
 struct Cli {
     #[command(subcommand)]
-    command: Option<Commands>,
+    command: Commands,
 }
 
 #[derive(Subcommand)]
@@ -107,7 +107,7 @@ async fn main() -> Result<()> {
         .finish();
 
     match &cli.command {
-        Some(Commands::UpdateCard { all, set }) => {
+        Commands::UpdateCard { all, set } => {
             if let Some(all) = all {
                 if *all {
                     application.update_entire_card_db().await?;
@@ -118,12 +118,12 @@ async fn main() -> Result<()> {
                 }
             }
         }
-        Some(Commands::UpdateCardset { all }) => {
+        Commands::UpdateCardset { all } => {
             if *all {
                 application.update_entire_cardset_db().await?;
             }
         }
-        Some(Commands::ExportCard { all }) => {
+        Commands::ExportCard { all } => {
             if *all {
                 let all_cards = application.export_entire_card_db().await?;
                 let mut wtr = csv::Writer::from_writer(std::io::stdout());
@@ -134,7 +134,7 @@ async fn main() -> Result<()> {
                 wtr.flush()?;
             }
         }
-        Some(Commands::PokemonTrainer(commands)) => match commands {
+        Commands::PokemonTrainer(commands) => match commands {
             PokemonTrainerCommands::Prepare => {
                 let pokemon_trainer = application.pokemon_trainer();
                 pokemon_trainer
@@ -157,17 +157,17 @@ async fn main() -> Result<()> {
                 println!("{expansions:#?}");
             }
         },
-        Some(Commands::DownloadImage) => {
+        Commands::DownloadImage => {
             application.download_image().await.unwrap();
         }
-        Some(Commands::ResyncAll) => {
+        Commands::ResyncAll => {
             application.unsync_entire_cardset_db().await?;
             application.update_entire_card_db().await?;
         }
-        Some(Commands::Yugioh(YugiohCommands::BuildExpLink)) => {
+        Commands::Yugioh(YugiohCommands::BuildExpLink) => {
             application.yugioh().build_yugioh_expansion_link().await;
         }
-        Some(Commands::Yugioh(YugiohCommands::BuildPriLink)) => loop {
+        Commands::Yugioh(YugiohCommands::BuildPriLink) => loop {
             application
                 .yugioh()
                 .build_yugioh_printing_link()
@@ -176,7 +176,7 @@ async fn main() -> Result<()> {
             println!("done wait for 1 secs ...");
             sleep(Duration::from_secs(1));
         },
-        Some(Commands::Yugioh(YugiohCommands::BuildDetail)) => loop {
+        Commands::Yugioh(YugiohCommands::BuildDetail) => loop {
             let waiting_secs = 1;
             application
                 .yugioh()
@@ -186,46 +186,45 @@ async fn main() -> Result<()> {
             println!("done wait for {waiting_secs} secs ...");
             sleep(Duration::from_secs(waiting_secs));
         },
-        Some(Commands::Yugioh(YugiohCommands::ExportCsv)) => {
+        Commands::Yugioh(YugiohCommands::ExportCsv) => {
             let wtr = std::io::stdout();
             application
                 .yugioh()
                 .export_yugioh_printing_detail(wtr)
                 .await;
         }
-        Some(Commands::Ws(WsCommands::Scrape)) => {
+        Commands::Ws(WsCommands::Scrape) => {
             let ws = application.ws();
             ws.ws_scrape().await?;
         }
-        Some(Commands::Ws(WsCommands::ExportCsv)) => {
+        Commands::Ws(WsCommands::ExportCsv) => {
             let wtr = std::io::stdout();
             let ws = application.ws();
             ws.ws_export_csv(wtr).await?;
         }
-        Some(Commands::OnePiece(OnePieceCommands::Scrape)) => {
+        Commands::OnePiece(OnePieceCommands::Scrape) => {
             application.one_piece().scrape_one_piece().await?;
         }
-        Some(Commands::OnePiece(OnePieceCommands::DownloadImages)) => {
+        Commands::OnePiece(OnePieceCommands::DownloadImages) => {
             application.one_piece().download_images().await?;
         }
-        Some(Commands::OnePiece(OnePieceCommands::ScrapeProducts)) => {
+        Commands::OnePiece(OnePieceCommands::ScrapeProducts) => {
             application.one_piece().scrape_one_piece_products().await;
         }
-        Some(Commands::OnePiece(OnePieceCommands::ExportCsv)) => {
+        Commands::OnePiece(OnePieceCommands::ExportCsv) => {
             let wtr = std::io::stdout();
             application.one_piece().export_one_piece_csv(wtr).await?;
         }
-        Some(Commands::OnePiece(OnePieceCommands::ExportProductCsv)) => {
+        Commands::OnePiece(OnePieceCommands::ExportProductCsv) => {
             let wtr = std::io::stdout();
             application
                 .one_piece()
                 .export_one_piece_product_csv(wtr)
                 .await?;
         }
-        Some(Commands::Limitless(LimitlessCommands::Poc)) => {
+        Commands::Limitless(LimitlessCommands::Poc) => {
             application.poc().await;
         }
-        None => {}
     }
     Ok(())
 }
