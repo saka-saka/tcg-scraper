@@ -1,5 +1,5 @@
 mod application;
-mod bigweb_scraper;
+// mod bigweb_scraper;
 mod domain;
 mod error;
 mod export_csv;
@@ -19,7 +19,6 @@ use application::Application;
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::Result;
 use dotenvy::dotenv;
-use export_csv::ExportCsv;
 use std::{thread::sleep, time::Duration};
 use tracing::Level;
 
@@ -32,23 +31,6 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     #[command(subcommand)]
-    Bigweb(BigwebCommands),
-    UpdateCardset {
-        #[arg(short, long)]
-        all: bool,
-    },
-    UpdateCard {
-        #[arg(short, long)]
-        all: Option<bool>,
-        #[arg(short, long)]
-        set: Option<String>,
-    },
-    DownloadImage,
-    ExportCard {
-        #[arg(short, long)]
-        all: bool,
-    },
-    #[command(subcommand)]
     PokemonTrainer(PokemonTrainerCommands),
     #[command(subcommand)]
     Yugioh(YugiohCommands),
@@ -58,7 +40,6 @@ enum Commands {
     OnePiece(OnePieceCommands),
     #[command(subcommand)]
     Limitless(LimitlessCommands),
-    ResyncAll,
 }
 
 #[derive(Subcommand)]
@@ -114,38 +95,6 @@ async fn main() -> Result<()> {
         .finish();
 
     match &cli.command {
-        Commands::Bigweb(BigwebCommands::Cardsets) => {
-            let bigweb = application.bigweb()?;
-            bigweb.update_entire_cardset_db().await?;
-        }
-        Commands::UpdateCard { all, set } => {
-            if let Some(all) = all {
-                if *all {
-                    application.update_entire_card_db().await?;
-                }
-            } else if let Some(set) = set {
-                if !set.is_empty() {
-                    application.update_single_set_card_db(set).await?;
-                }
-            }
-        }
-        Commands::UpdateCardset { all } => {
-            if *all {
-                let bigweb = application.bigweb()?;
-                bigweb.update_entire_cardset_db().await?;
-            }
-        }
-        Commands::ExportCard { all } => {
-            if *all {
-                let all_cards = application.export_entire_card_db().await?;
-                let mut wtr = csv::Writer::from_writer(std::io::stdout());
-                for card in all_cards {
-                    let csv_card: ExportCsv = card.into();
-                    wtr.serialize(csv_card)?;
-                }
-                wtr.flush()?;
-            }
-        }
         Commands::PokemonTrainer(commands) => match commands {
             PokemonTrainerCommands::Prepare => {
                 let pokemon_trainer = application.pokemon_trainer();
@@ -169,13 +118,6 @@ async fn main() -> Result<()> {
                 println!("{expansions:#?}");
             }
         },
-        Commands::DownloadImage => {
-            application.download_image().await.unwrap();
-        }
-        Commands::ResyncAll => {
-            application.unsync_entire_cardset_db().await?;
-            application.update_entire_card_db().await?;
-        }
         Commands::Yugioh(YugiohCommands::BuildExpLink) => {
             application.yugioh().build_yugioh_expansion_link().await;
         }
