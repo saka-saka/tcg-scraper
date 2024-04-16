@@ -1,6 +1,9 @@
-use crate::domain::{BigwebScrappedPokemonCard, Cardset, LastFetchedAt, PokemonCard, Rarity};
+use std::sync::Arc;
+
+use crate::domain::{LastFetchedAt, PokemonCard, Rarity};
 use crate::one_piece_scraper::{OnePieceCard, OnePieceCardRarity, OnePieceCardType};
 use crate::pokemon_trainer_scraper::{ThePTCGCard, ThePTCGSet};
+use crate::ptcg_jp_scraper::{PtcgJpCard, PtcgJpExpansion, TcgCollectorCardDetail};
 use crate::ws_scraper::WsCard;
 use crate::yugioh_scraper::YugiohPrinting;
 use futures::stream::BoxStream;
@@ -18,175 +21,101 @@ impl Repository {
         let pool = PgPoolOptions::new().connect_lazy(url).unwrap();
         Self { pool }
     }
-    pub async fn get_cardset_id(&self, set_ref: &str) -> Result<Option<String>, RepositoryError> {
-        let record = sqlx::query!(
-            "SELECT id FROM bigweb_pokemon_expansion WHERE code = $1",
-            set_ref
+    pub fn get_tc_details(&self) -> BoxStream<Result<TcgCollectorCardDetail, RepositoryError>> {
+        sqlx::query_as!(
+            TcgCollectorCardDetail,
+            "SELECT name, number, exp_code, html, url from tcg_collector"
         )
-        .fetch_optional(&self.pool)
-        .await?;
-        Ok(record.map(|r| r.id.to_string()))
+        .fetch(&self.pool)
+        .map_err(RepositoryError::from)
+        .boxed()
     }
-    pub async fn get_cardset_ids(&self, is_sync: bool) -> Result<Vec<String>, RepositoryError> {
-        let cardset_ids: Vec<String> = sqlx::query!(
-            "SELECT id FROM bigweb_pokemon_expansion WHERE is_sync = $1",
-            is_sync
-        )
-        .fetch_all(&self.pool)
-        .await?
-        .iter()
-        .map(|c| c.id.to_string())
-        .collect();
-        Ok(cardset_ids)
-    }
-    pub async fn upsert_cardset(&self, cardset: &Cardset) -> Result<(), RepositoryError> {
-        let cardset_id = cardset.url.cardset_id();
-        let id = uuid::Uuid::from_slice(cardset_id.as_bytes()).unwrap();
-        sqlx::query!(
-            "INSERT INTO bigweb_pokemon_expansion(id, name, code, updated_at, item_count)
-            VALUES($1, $2, $3, NOW(), $4)
-            ON CONFLICT(id)
-            DO UPDATE SET name = $2, code = $3, updated_at = NOW(), item_count = $4",
-            id,
-            cardset.name,
-            cardset.r#ref,
-            cardset.result_count as i32
-        )
-        .execute(&self.pool)
-        .await?;
-        Ok(())
-    }
-    pub async fn fetch_all_cards(&self) -> Result<Vec<PokemonCard>, RepositoryError> {
-        let record = sqlx::query!(
-            "SELECT
-                bpc.id,
-                bpc.name,
-                number,
-                rarity,
-                sale_price,
-                bpcs.name cardset_name,
-                bpcs.code as cardset_ref,
-                expansion_id,
-                last_fetched_at,
-                remark
-            FROM bigweb_pokemon_printing bpc
-            LEFT JOIN bigweb_pokemon_expansion bpcs
-            ON bpc.expansion_id = bpcs.id"
+    pub async fn get_ptcg_jp_expansions_links(&self) -> Result<Vec<String>, RepositoryError> {
+        let links = sqlx::query!(
+            "
+            SELECT exp_link
+            FROM pokemon_trainer_expansion pt
+            LEFT JOIN ptcg_jp_expansions jp on pt.code = jp.code"
         )
         .fetch_all(&self.pool)
         .await?;
-        let mut pokemon_data = vec![];
-        for r in record {
-            pokemon_data.push(PokemonCard {
-                name: r.name,
-                number: r.number,
-                id: r.id.to_string(),
-                rarity: r.rarity,
-                set_id: r.expansion_id.to_string(),
-                set_name: r.cardset_name.unwrap(),
-                set_ref: r.cardset_ref.unwrap(),
-                sale_price: r.sale_price.map(|sp| sp as i64),
-                last_fetched_at: crate::domain::LastFetchedAt {
-                    inner: r.last_fetched_at.unwrap(),
-                },
-                remark: r.remark,
-            });
-        }
-        Ok(pokemon_data)
+        Ok(links.into_iter().filter_map(|r| r.exp_link).collect())
     }
-    // pub async fn get_all_pokemon_trainer_printing(&self) -> Result<Vec<PokemonCard>, Error> {
-    //     let records = sqlx::query!(
-    //         "SELECT printing.code code, printing.name card_name, number, rarity, expansion.name set_name, expansion_code
-    //         FROM pokemon_trainer_printing printing
-    //         LEFT JOIN pokemon_trainer_expansion expansion
-    //         ON printing.expansion_code = expansion.code"
-    //     )
-    //     .fetch_all(&self.pool)
-    //     .await?;
-    //     let mut cards = vec![];
-    //     for record in records {
-    //         let card = PokemonCard {
-    //             id: record.code,
-    //             set_id: record.set_code,
-    //         };
-    //         cards.push(card);
-    //     }
-    //     unimplemented!()
-    // }
-    pub async fn fetch_card_ids(&self) -> Result<Vec<String>, RepositoryError> {
-        let record = sqlx::query!(
-            "SELECT id
-            FROM bigweb_pokemon_printing
-            WHERE image_downloaded = false"
-        )
-        .fetch_all(&self.pool)
-        .await?;
-        let mut ids = vec![];
-        for r in record {
-            ids.push(r.id.to_string());
-        }
-        Ok(ids)
-    }
-    pub async fn image_downloaded(&self, id: &str) -> Result<(), RepositoryError> {
-        let id = uuid::Uuid::from_slice(id.as_bytes()).unwrap();
-        sqlx::query!(
-            "UPDATE bigweb_pokemon_printing SET image_downloaded = true WHERE id = $1",
-            id
-        )
-        .execute(&self.pool)
-        .await?;
-        Ok(())
-    }
-    pub async fn upsert_card(
+    pub async fn save_tcg_collector(
         &self,
-        card: &BigwebScrappedPokemonCard,
+        details: Vec<TcgCollectorCardDetail>,
     ) -> Result<(), RepositoryError> {
-        let card_id = uuid::Uuid::from_slice(card.id.as_bytes()).unwrap();
-        let set_id = uuid::Uuid::from_slice(card.set_id.as_bytes()).unwrap();
-        sqlx::query!(
-            "INSERT INTO bigweb_pokemon_printing(id, name, number, rarity, sale_price, expansion_id, remark)
-            VALUES($1, $2, $3, $4, $5, $6, $7)
-            ON CONFLICT(id)
-            DO UPDATE SET name = $2, number = $3, rarity = $4, sale_price = $5, expansion_id = $6, remark = $7",
-            card_id,
-            card.name,
-            card.number,
-            card.rarity.clone().map(|r| {
-              match r {
-                Rarity::Unknown(s)=> s,
-                _ => r.to_string()
-              }
-            }),
-            card.sale_price.clone().map(|p| p.value() as i32),
-            set_id,
-            card.remark
-        )
-        .execute(&self.pool)
-        .await?;
+        for detail in details {
+            sqlx::query!(
+                "INSERT INTO tcg_collector(name, number, exp_code, html, url) VALUES ($1, $2, $3, $4, $5)",
+                detail.name,
+                detail.number,
+                detail.exp_code,
+                detail.html,
+                detail.url
+            ).execute(&self.pool).await?;
+        }
         Ok(())
     }
-    pub async fn synced(&self, cardset_id: &str) -> Result<(), RepositoryError> {
-        let cardset_id = uuid::Uuid::from_slice(cardset_id.as_bytes()).unwrap();
-        sqlx::query!(
-            "UPDATE bigweb_pokemon_expansion
-            SET is_sync = true, updated_at = NOW()
-            WHERE id = $1",
-            cardset_id
-        )
-        .execute(&self.pool)
-        .await?;
+    pub async fn save_ptcg_jp_expansions(
+        &self,
+        exps: Vec<PtcgJpExpansion>,
+    ) -> Result<(), RepositoryError> {
+        for exp in exps {
+            match sqlx::query!(
+                            "INSERT INTO ptcg_jp_expansions(code, name_en, exp_link, symbol_src, logo_src, release_date)
+                            VALUES($1, $2, $3, $4, $5, $6)",
+                            exp.code,
+                            exp.name,
+                            exp.link,
+                            exp.symbol_src,
+                            exp.logo_src,
+                            exp.release_date
+                        )
+                        .execute(&self.pool)
+                        .await {
+                Ok(_) => {},
+                Err(err) => {dbg!(err);},
+            };
+        }
         Ok(())
     }
-    pub async fn unsync(&self, cardset_id: &str) -> Result<(), RepositoryError> {
-        let cardset_id = uuid::Uuid::from_slice(cardset_id.as_bytes()).unwrap();
-        sqlx::query!(
-            "UPDATE bigweb_pokemon_expansion
-            SET is_sync = false, updated_at = NOW()
-            WHERE id = $1",
-            cardset_id
+    pub async fn ptcg_tw_is_exists(
+        &self,
+        detail: &TcgCollectorCardDetail,
+    ) -> Result<bool, RepositoryError> {
+        let r = sqlx::query!(
+            "SELECT * FROM pokemon_trainer_printing WHERE number = $1 AND expansion_code = $2",
+            detail.number,
+            detail.exp_code
         )
-        .execute(&self.pool)
-        .await?;
+        .fetch_one(&self.pool)
+        .await
+        .is_ok();
+        Ok(r)
+    }
+    pub async fn save_ptcg_jp_cards(&self, cards: Vec<PtcgJpCard>) -> Result<(), RepositoryError> {
+        for card in cards {
+            dbg!(&card);
+            sqlx::query!(
+                "
+                UPDATE pokemon_trainer_printing SET
+                name_en = $1,
+                skill1_name_en = $4,
+                skill1_damage = $5,
+                card_description_en = $6
+                WHERE number = $2 AND expansion_code = $3
+                ",
+                card.name,
+                card.number,
+                card.exp_code,
+                card.skill1_name_en,
+                card.skill1_damage,
+                card.desc,
+            )
+            .execute(&self.pool)
+            .await?;
+        }
         Ok(())
     }
     pub async fn upsert_pokemon_trainer_expansion(&self, set: &ThePTCGSet) {

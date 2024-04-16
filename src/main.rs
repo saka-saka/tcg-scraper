@@ -1,5 +1,4 @@
 mod application;
-// mod bigweb_scraper;
 mod domain;
 mod error;
 mod export_csv;
@@ -8,6 +7,7 @@ mod one_piece_csv;
 mod one_piece_scraper;
 mod pokemon_csv;
 mod pokemon_trainer_scraper;
+mod ptcg_jp_scraper;
 mod repository;
 mod scraper_error;
 mod ws_csv;
@@ -40,11 +40,16 @@ enum Commands {
     OnePiece(OnePieceCommands),
     #[command(subcommand)]
     Limitless(LimitlessCommands),
+    #[command(subcommand)]
+    PtcgJp(PtcgJpCommands),
 }
 
 #[derive(Subcommand)]
-enum BigwebCommands {
-    Cardsets,
+enum PtcgJpCommands {
+    Exp,
+    Card,
+    Tc,
+    Extra,
 }
 
 #[derive(Subcommand)]
@@ -101,9 +106,9 @@ async fn main() -> Result<()> {
                 pokemon_trainer
                     .update_entire_pokemon_trainer_expansion()
                     .await?;
-                pokemon_trainer.build_pokemon_trainer_fetchable().await?;
-                pokemon_trainer.update_pokemon_trainer_printing().await?;
-                pokemon_trainer.download_all_image().await?;
+                // pokemon_trainer.build_pokemon_trainer_fetchable().await?;
+                // pokemon_trainer.update_pokemon_trainer_printing().await?;
+                // pokemon_trainer.download_all_image().await?;
             }
             PokemonTrainerCommands::Run => {
                 let pokemon_trainer = application.pokemon_trainer();
@@ -178,6 +183,23 @@ async fn main() -> Result<()> {
         }
         Commands::Limitless(LimitlessCommands::Poc) => {
             application.poc().await;
+        }
+
+        Commands::PtcgJp(PtcgJpCommands::Exp) => {
+            let ptcg_jp = application.ptcg_jp();
+            ptcg_jp.build_exp().await?;
+        }
+        Commands::PtcgJp(PtcgJpCommands::Card) => {
+            let ptcg_jp = application.ptcg_jp();
+            ptcg_jp.build_cards().await?;
+        }
+        Commands::PtcgJp(PtcgJpCommands::Tc) => {
+            let ptcg_jp = application.ptcg_jp();
+            ptcg_jp.save_html().await?;
+        }
+        Commands::PtcgJp(PtcgJpCommands::Extra) => {
+            let ptcg_jp = application.ptcg_jp();
+            ptcg_jp.build_extra().await?;
         }
     }
     Ok(())

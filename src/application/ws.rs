@@ -22,7 +22,8 @@ impl Ws {
 
     pub async fn ws_export_csv<W: std::io::Write>(&self, w: W) -> Result<(), Error> {
         let mut wtr = csv::Writer::from_writer(w);
-        while let Some(card) = self.repository.get_ws_cards().try_next().await? {
+        let mut s = self.repository.get_ws_cards();
+        while let Some(card) = s.try_next().await? {
             let p: ExportCsv = card.into();
             wtr.serialize(p)?;
         }

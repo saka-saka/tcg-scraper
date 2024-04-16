@@ -1,4 +1,5 @@
 use crate::{domain::Rarity, scraper_error::Error};
+use chrono::NaiveDate;
 use derive_builder::Builder;
 use html_escape::decode_html_entities;
 use scraper::{ElementRef, Selector};
@@ -10,7 +11,7 @@ pub struct ThePTCGSet {
     pub expansion_code: String,
     pub series: String,
     pub name: String,
-    pub release_date: String,
+    pub release_date: NaiveDate,
 }
 
 #[derive(Debug, Builder)]
@@ -67,13 +68,18 @@ impl PokemonTrainerSiteScraper {
                 let expansion_title_elem = link.select(expansion_title_selector).next().unwrap();
                 let release_date_selector = &Selector::parse(".relaseDate span").unwrap();
                 let release_date_elem = link.select(release_date_selector).next().unwrap();
+                let release_date = NaiveDate::parse_from_str(
+                    dbg!(release_date_elem.inner_html().trim()),
+                    "%m-%d-%Y",
+                )
+                .unwrap();
                 let name = expansion_title_elem.inner_html().trim().to_owned();
                 let decoded_name = decode_html_entities(&name);
                 let pset = ThePTCGSet {
                     expansion_code: expansion_code.to_owned().to_lowercase(),
                     series: series_elem.inner_html().trim().to_owned(),
                     name: decoded_name.to_string(),
-                    release_date: release_date_elem.inner_html().trim().to_owned(),
+                    release_date,
                 };
                 psets.push(pset);
             }
