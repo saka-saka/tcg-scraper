@@ -1,9 +1,9 @@
-use std::sync::Arc;
-
 use crate::domain::{LastFetchedAt, PokemonCard, Rarity};
 use crate::one_piece_scraper::{OnePieceCard, OnePieceCardRarity, OnePieceCardType};
 use crate::pokemon_trainer_scraper::{ThePTCGCard, ThePTCGSet};
-use crate::ptcg_jp_scraper::{PtcgJpCard, PtcgJpExpansion, TcgCollectorCardDetail};
+use crate::ptcg_jp_scraper::{
+    PtcgJpCard, PtcgJpExpansion, TcgCollectorCardDetail, TcgCollectorCardRarity,
+};
 use crate::ws_scraper::WsCard;
 use crate::yugioh_scraper::YugiohPrinting;
 use futures::stream::BoxStream;
@@ -24,7 +24,7 @@ impl Repository {
     pub fn get_tc_details(&self) -> BoxStream<Result<TcgCollectorCardDetail, RepositoryError>> {
         sqlx::query_as!(
             TcgCollectorCardDetail,
-            "SELECT name, number, exp_code, html, url from tcg_collector"
+            r#"SELECT name, number, exp_code, html, url, rarity AS "rarity: _" from tcg_collector"#
         )
         .fetch(&self.pool)
         .map_err(RepositoryError::from)
@@ -54,6 +54,22 @@ impl Repository {
                 detail.html,
                 detail.url
             ).execute(&self.pool).await?;
+        }
+        Ok(())
+    }
+
+    pub async fn update_tc_rarity(
+        &self,
+        card_rarities: Vec<TcgCollectorCardRarity>,
+    ) -> Result<(), RepositoryError> {
+        for c in card_rarities {
+            sqlx::query!(
+                "UPDATE tcg_collector SET rarity = $1 WHERE url = $2",
+                c.rarity as Rarity,
+                c.url
+            )
+            .execute(&self.pool)
+            .await?;
         }
         Ok(())
     }
@@ -93,6 +109,27 @@ impl Repository {
         .await
         .is_ok();
         Ok(r)
+    }
+    pub async fn save_extra(&self, card: PtcgJpCard) -> Result<(), RepositoryError> {
+        let results = sqlx::query!(
+            r#"
+            -- INSERT INTO pokemon_trainer_printing(code, name, kind, number, rarity, expansion_code, name_en, skill1_name_en, skill1_damage, card_description_en)
+            SELECT
+                'd|' || code || '|' || $4 || '|' || $5 as code
+            FROM pokemon_trainer_printing
+            WHERE name_en = $1 AND (skill1_name_en = $2 OR card_description_en = $3)
+            LIMIT 1"#,
+            card.name,
+            card.skill1_name_en,
+            card.desc,
+            card.number,
+            card.exp_code,
+        )
+        .fetch_all(&self.pool)
+        .await?;
+        dbg!(card);
+        dbg!(results);
+        Ok(())
     }
     pub async fn save_ptcg_jp_cards(&self, cards: Vec<PtcgJpCard>) -> Result<(), RepositoryError> {
         for card in cards {

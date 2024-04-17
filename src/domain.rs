@@ -1,5 +1,6 @@
 use derive_builder::Builder;
-use sqlx::types::time::OffsetDateTime;
+use serde::Deserialize;
+use sqlx::{types::time::OffsetDateTime, Decode};
 use strum_macros::EnumString;
 use time::macros::format_description;
 
@@ -42,8 +43,17 @@ pub struct PokemonCard {
 
 #[allow(clippy::upper_case_acronyms)]
 #[derive(
-    EnumString, strum_macros::Display, Clone, Debug, PartialEq, Default, strum_macros::EnumIter,
+    Deserialize,
+    EnumString,
+    strum_macros::Display,
+    Clone,
+    Debug,
+    PartialEq,
+    Default,
+    strum_macros::EnumIter,
+    sqlx::Type,
 )]
+#[sqlx(type_name = "ptcg_rarity_enum")]
 pub enum Rarity {
     #[default]
     UR,
@@ -68,6 +78,5 @@ pub enum Rarity {
     C,
     TR,
     TD,
-    #[strum(default, to_string = "Unknown")]
-    Unknown(String),
+    Unknown,
 }

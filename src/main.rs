@@ -19,6 +19,7 @@ use application::Application;
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::Result;
 use dotenvy::dotenv;
+use reqwest::redirect::Policy;
 use std::{thread::sleep, time::Duration};
 use tracing::Level;
 
@@ -50,6 +51,7 @@ enum PtcgJpCommands {
     Card,
     Tc,
     Extra,
+    Rarity,
 }
 
 #[derive(Subcommand)]
@@ -201,6 +203,7 @@ async fn main() -> Result<()> {
             let ptcg_jp = application.ptcg_jp();
             ptcg_jp.build_extra().await?;
         }
+        Commands::PtcgJp(PtcgJpCommands::Rarity) => {}
     }
     Ok(())
 }

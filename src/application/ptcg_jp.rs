@@ -36,6 +36,14 @@ impl PtcgJp {
             .await?;
         Ok(())
     }
+    pub async fn update_rarity(&self) -> Result<(), Error> {
+        let links = self.repository.get_ptcg_jp_expansions_links().await?;
+        for link in links {
+            let rarities = self.scraper.fetch_tcg_collector_card_rarity(&link).await?;
+            self.repository.update_tc_rarity(rarities).await?;
+        }
+        Ok(())
+    }
     pub async fn build_extra(&self) -> Result<(), Error> {
         self.repository
             .get_tc_details()
@@ -44,9 +52,9 @@ impl PtcgJp {
                 if !self.repository.ptcg_tw_is_exists(&d).await? {
                     let card = self.scraper.fetch_card_detail2(d).await?;
                     dbg!(&card);
+                    // self.repository.save_ptcg_jp_cards(vec![card]).await?;
+                    self.repository.save_extra(card).await?;
                 }
-                // let card = self.scraper.fetch_card_detail2(d).await?;
-                // self.repository.save_ptcg_jp_cards(vec![card]).await?;
                 Ok(())
             })
             .await?;

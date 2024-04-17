@@ -198,7 +198,7 @@ impl PokemonTrainerSiteScraper {
             Rarity::SR => 8,
             Rarity::HR => 9,
             Rarity::UR => 10,
-            Rarity::Unknown(_) => 11,
+            Rarity::Unknown => 11,
             Rarity::K => 12,
             Rarity::A => 13,
             Rarity::AR => 14,
