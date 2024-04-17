@@ -1,6 +1,6 @@
 use derive_builder::Builder;
 use serde::Deserialize;
-use sqlx::{types::time::OffsetDateTime, Decode};
+use sqlx::types::time::OffsetDateTime;
 use strum_macros::EnumString;
 use time::macros::format_description;
 

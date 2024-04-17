@@ -1,6 +1,6 @@
 use std::num::ParseIntError;
 
-use crate::repository::RepositoryError;
+use crate::{repository::RepositoryError, scraper::scraper_error::ScraperError};
 
 #[derive(thiserror::Error, Debug)]
 pub(crate) enum Error {
@@ -15,9 +15,7 @@ pub(crate) enum Error {
     #[error("url parse error {0}")]
     UrlParse(#[from] url::ParseError),
     #[error("bigweb scraper error {0}")]
-    Scraper(#[from] crate::scraper_error::Error),
-    #[error("set is not exist {0}")]
-    SetNotExists(String),
+    Scraper(#[from] ScraperError),
     #[error("field missing {0}")]
     FieldMissing(String),
     #[error("ParseInt error {0}")]

@@ -1,4 +1,4 @@
-use crate::{export_csv::ExportCsv, yugioh_scraper::YugiohPrinting};
+use crate::{export::export_csv::ExportCsv, scraper::yugioh::YugiohPrinting};
 use time::macros::format_description;
 
 impl From<YugiohPrinting> for ExportCsv {

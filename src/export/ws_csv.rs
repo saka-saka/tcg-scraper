@@ -1,12 +1,12 @@
-use crate::{domain::PokemonCard, export_csv::ExportCsv};
+use crate::{export::export_csv::ExportCsv, scraper::ws::WsCard};
 use lazy_static::lazy_static;
 use regex::Regex;
 
-impl From<PokemonCard> for ExportCsv {
-    fn from(value: PokemonCard) -> Self {
+impl From<WsCard> for ExportCsv {
+    fn from(value: WsCard) -> Self {
         ExportCsv {
             product_id: None,
-            brand: Some(String::from("Pokemon")),
+            brand: Some(String::from("Weiβ Schwarz")),
             set: Some(sanitize(&value.set_name)),
             edition: None,
             series: None,
@@ -17,20 +17,20 @@ impl From<PokemonCard> for ExportCsv {
             card_name_english: None,
             card_name_chinese: None,
             card_name_japanese: Some(value.name),
-            card_number: value.number,
-            image: Some(format!("{}.jpg", value.id)),
-            value: value.sale_price.map(|p| p.to_string()),
-            reference: Some(value.set_ref),
+            card_number: Some(value.code.clone()),
+            image: Some(value.img_src),
+            value: None,
+            reference: Some(value.set_code.clone()),
             remark: None,
             remark1: value.last_fetched_at.action_code(),
             remark2: value.last_fetched_at.created_datetime(),
-            remark3: Some(value.set_id),
-            remark4: Some(value.id),
+            remark3: None,
+            remark4: Some(value.code),
             remark5: None,
             remark6: None,
             remark7: None,
             remark8: None,
-            remark9: value.remark,
+            remark9: Some(value.set_code),
             remark10: None,
             enable: None,
             p_language: None,

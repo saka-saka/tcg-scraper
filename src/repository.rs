@@ -1,11 +1,11 @@
 use crate::domain::{LastFetchedAt, PokemonCard, Rarity};
-use crate::one_piece_scraper::{OnePieceCard, OnePieceCardRarity, OnePieceCardType};
-use crate::pokemon_trainer_scraper::{ThePTCGCard, ThePTCGSet};
-use crate::ptcg_jp_scraper::{
+use crate::scraper::one_piece::{OnePieceCard, OnePieceCardRarity, OnePieceCardType};
+use crate::scraper::ptcg::{PtcgExpansion, ThePTCGCard};
+use crate::scraper::ptcg_jp::{
     PtcgJpCard, PtcgJpExpansion, TcgCollectorCardDetail, TcgCollectorCardRarity,
 };
-use crate::ws_scraper::WsCard;
-use crate::yugioh_scraper::YugiohPrinting;
+use crate::scraper::ws::WsCard;
+use crate::scraper::yugioh::YugiohPrinting;
 use futures::stream::BoxStream;
 use futures::{StreamExt, TryStreamExt};
 use sqlx::postgres::PgPoolOptions;
@@ -155,24 +155,16 @@ impl Repository {
         }
         Ok(())
     }
-    pub async fn upsert_pokemon_trainer_expansion(&self, set: &ThePTCGSet) {
+    pub async fn upsert_ptcg_expansion(&self, exp: &PtcgExpansion) -> Result<(), RepositoryError> {
         sqlx::query!(
               "INSERT INTO pokemon_trainer_expansion(id, code, series, name, release_date, updated_at)
               VALUES(gen_random_uuid(), $1, $2, $3, $4, NOW())
               ON CONFLICT(code)
               DO UPDATE SET code = $1, series = $2, name = $3, release_date = $4, updated_at = NOW()",
-              set.expansion_code, set.series, set.name, set.release_date)
+              exp.code, exp.series, exp.name, exp.release_date)
         .execute(&self.pool)
-        .await
-        .unwrap();
-    }
-    pub async fn get_all_pokemon_trainer_expansion_code(
-        &self,
-    ) -> Result<Vec<String>, RepositoryError> {
-        let result = sqlx::query!("SELECT code FROM pokemon_trainer_expansion")
-            .fetch_all(&self.pool)
-            .await?;
-        Ok(result.into_iter().map(|a| a.code).collect())
+        .await?;
+        Ok(())
     }
     pub async fn upsert_fetchable(
         &self,

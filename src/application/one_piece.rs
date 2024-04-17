@@ -1,6 +1,8 @@
 use crate::{
-    error::Error, export_csv::ExportCsv, one_piece_csv::OnePieceProductsCsv,
-    one_piece_scraper::OnePieceScraper, repository::Repository,
+    error::Error,
+    export::{export_csv::ExportCsv, one_piece_csv::OnePieceProductsCsv},
+    repository::Repository,
+    scraper::one_piece::OnePieceScraper,
 };
 use futures::TryStreamExt;
 

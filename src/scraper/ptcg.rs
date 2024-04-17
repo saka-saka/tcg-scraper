@@ -1,14 +1,16 @@
-use crate::{domain::Rarity, scraper_error::Error};
+use crate::{domain::Rarity, error::Error};
 use chrono::NaiveDate;
 use derive_builder::Builder;
 use html_escape::decode_html_entities;
 use scraper::{ElementRef, Selector};
 
+use super::{get_source, scraper_error::ScraperError};
+
 const POKEMON_TRAINER_SITE_URL_BASE: &str = "https://asia.pokemon-card.com";
 
 #[derive(Debug)]
-pub struct ThePTCGSet {
-    pub expansion_code: String,
+pub struct PtcgExpansion {
+    pub code: String,
     pub series: String,
     pub name: String,
     pub release_date: NaiveDate,
@@ -38,17 +40,14 @@ impl PokemonTrainerSiteScraper {
     pub fn new() -> Self {
         Self {}
     }
-    pub async fn get_source(url: &str) -> Result<String, Error> {
-        Ok(reqwest::Client::new().get(url).send().await?.text().await?)
-    }
-    pub async fn fetch_expansion(&self) -> Result<Vec<ThePTCGSet>, Error> {
+    pub async fn fetch_expansion(&self) -> Result<Vec<PtcgExpansion>, Error> {
         let mut site_url = format!("{}/tw/card-search", POKEMON_TRAINER_SITE_URL_BASE);
         let mut psets = vec![];
         loop {
-            let source = Self::get_source(&site_url).await?;
+            let source = get_source(&site_url).await?;
             let document = scraper::Html::parse_document(&source);
             let expansion_link_selector = &Selector::parse(".expansionLink")
-                .map_err(|e| Error::ScraperBackend(e.to_string()))?;
+                .map_err(|e| ScraperError::ScraperBackend(e.to_string()))?;
             for link in document.select(expansion_link_selector) {
                 // example: /tw/card-search/list/?expansionCodes=SV5K
                 let expansion_code = link
@@ -68,15 +67,13 @@ impl PokemonTrainerSiteScraper {
                 let expansion_title_elem = link.select(expansion_title_selector).next().unwrap();
                 let release_date_selector = &Selector::parse(".relaseDate span").unwrap();
                 let release_date_elem = link.select(release_date_selector).next().unwrap();
-                let release_date = NaiveDate::parse_from_str(
-                    dbg!(release_date_elem.inner_html().trim()),
-                    "%m-%d-%Y",
-                )
-                .unwrap();
+                let release_date =
+                    NaiveDate::parse_from_str(release_date_elem.inner_html().trim(), "%m-%d-%Y")
+                        .unwrap();
                 let name = expansion_title_elem.inner_html().trim().to_owned();
                 let decoded_name = decode_html_entities(&name);
-                let pset = ThePTCGSet {
-                    expansion_code: expansion_code.to_owned().to_lowercase(),
+                let pset = PtcgExpansion {
+                    code: expansion_code.to_string(),
                     series: series_elem.inner_html().trim().to_owned(),
                     name: decoded_name.to_string(),
                     release_date,
@@ -84,7 +81,7 @@ impl PokemonTrainerSiteScraper {
                 psets.push(pset);
             }
             let next_page_link_selector = &Selector::parse("li.paginationItem.next a")
-                .map_err(|e| Error::ScraperBackend(e.to_string()))?;
+                .map_err(|e| ScraperError::ScraperBackend(e.to_string()))?;
             if let Some(next_page_link) = document.select(next_page_link_selector).next() {
                 let href = next_page_link.value().attr("href").unwrap().to_owned();
                 site_url = format!("{}{}", POKEMON_TRAINER_SITE_URL_BASE, href);
@@ -100,10 +97,10 @@ impl PokemonTrainerSiteScraper {
             format!("https://asia.pokemon-card.com/tw/card-search/list/?expansionCodes={set_code}");
         let mut card_codes = vec![];
         loop {
-            let source = Self::get_source(&set_url).await?;
+            let source = get_source(&set_url).await?;
             let document = scraper::Html::parse_document(&source);
-            let card_selector =
-                &Selector::parse(".card a").map_err(|e| Error::ScraperBackend(e.to_string()))?;
+            let card_selector = &Selector::parse(".card a")
+                .map_err(|e| ScraperError::ScraperBackend(e.to_string()))?;
             for card_elem in document.select(card_selector) {
                 let mut href = card_elem.value().attr("href").unwrap().to_string();
                 href.pop();
@@ -111,7 +108,7 @@ impl PokemonTrainerSiteScraper {
                 card_codes.push(code.to_string());
             }
             let next_selector = &Selector::parse(".paginationItem.next a")
-                .map_err(|e| Error::ScraperBackend(e.to_string()))?;
+                .map_err(|e| ScraperError::ScraperBackend(e.to_string()))?;
             match document.select(next_selector).next() {
                 Some(e) => {
                     set_url = format!(
@@ -125,7 +122,7 @@ impl PokemonTrainerSiteScraper {
         Ok(card_codes)
     }
     pub async fn fetch_printing_detail(&self, card_url: &str) -> Result<ThePTCGCard, Error> {
-        let source = Self::get_source(card_url).await?;
+        let source = get_source(card_url).await?;
         let mut card_builder = ThePTCGCardBuilder::default();
         let document = scraper::Html::parse_document(&source);
         let common_header =
@@ -183,7 +180,7 @@ impl PokemonTrainerSiteScraper {
         let (_, code) = card_url.rsplit_once('/').unwrap();
         card_builder.code(code.to_string());
         card_builder.set_code(None);
-        let card = card_builder.build()?;
+        let card = card_builder.build().unwrap();
         Ok(card)
     }
     pub async fn rarity_ids(&self, rarity: &Rarity) -> Result<Vec<String>, Error> {
@@ -212,7 +209,7 @@ impl PokemonTrainerSiteScraper {
         let mut page_num = 1;
         loop {
             let url = format!("https://asia.pokemon-card.com/tw/card-search/list/?pageNo={}&sortCondition=&keyword=&cardType=all&regulation=all&pokemonEnergy=&pokemonWeakness=&pokemonResistance=&pokemonMoveEnergy=&hpLowerLimit=none&hpUpperLimit=none&retreatCostLowerLimit=0&retreatCostUpperLimit=none&rarity%5B0%5D={}&illustratorName=&expansionCodes=", page_num, rarity_label_number);
-            let source = Self::get_source(&url).await?;
+            let source = get_source(&url).await?;
             let document = scraper::Html::parse_document(&source);
             let selector = &Selector::parse("#noResult").unwrap();
             let selection = document.select(selector);

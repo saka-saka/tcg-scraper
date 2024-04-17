@@ -1,6 +1,6 @@
 use futures::TryStreamExt;
 
-use crate::{error::Error, ptcg_jp_scraper::PtcgScraper, repository::Repository};
+use crate::{error::Error, repository::Repository, scraper::ptcg_jp::PtcgScraper};
 
 pub struct PtcgJp {
     pub scraper: PtcgScraper,
@@ -8,7 +8,7 @@ pub struct PtcgJp {
 }
 
 impl PtcgJp {
-    pub async fn build_exp(&self) -> Result<(), Error> {
+    pub async fn update_exp(&self) -> Result<(), Error> {
         let exps = self.scraper.fetch_tc_exps().await?;
         self.repository.save_ptcg_jp_expansions(exps).await?;
         Ok(())
@@ -24,7 +24,7 @@ impl PtcgJp {
         }
         Ok(())
     }
-    pub async fn build_cards(&self) -> Result<(), Error> {
+    pub async fn update_cards(&self) -> Result<(), Error> {
         self.repository
             .get_tc_details()
             .map_err(Error::from)

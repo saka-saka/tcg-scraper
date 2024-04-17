@@ -1,6 +1,8 @@
 use futures::TryStreamExt;
 
-use crate::{error::Error, export_csv::ExportCsv, repository::Repository, ws_scraper::WsScraper};
+use crate::{
+    error::Error, export::export_csv::ExportCsv, repository::Repository, scraper::ws::WsScraper,
+};
 
 pub struct Ws {
     pub scraper: WsScraper,

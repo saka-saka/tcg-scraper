@@ -1,4 +1,6 @@
-use crate::{export_csv::ExportCsv, repository::Repository, yugioh_scraper::YugiohScraper};
+use crate::{
+    export::export_csv::ExportCsv, repository::Repository, scraper::yugioh::YugiohScraper,
+};
 
 pub struct Yugioh {
     pub scraper: YugiohScraper,

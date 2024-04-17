@@ -1,17 +1,16 @@
 use chrono::NaiveDate;
-use scraper::{ElementRef, Selector};
+use scraper::Selector;
 
 use crate::{domain::Rarity, error::Error};
+
+use super::{get_source, Inner};
 
 pub struct PtcgScraper {}
 
 impl PtcgScraper {
-    pub async fn get_source(url: &str) -> Result<String, Error> {
-        Ok(reqwest::Client::new().get(url).send().await?.text().await?)
-    }
     pub async fn fetch_tc_exps(&self) -> Result<Vec<PtcgJpExpansion>, Error> {
         let url = "https://www.tcgcollector.com/expansions/jp?collectionProgressMode=anyCardVariant&releaseDateOrder=newToOld&displayAs=logos";
-        let source = Self::get_source(url).await?;
+        let source = get_source(url).await?;
         let document = scraper::Html::parse_document(&source);
 
         // example: Mar 22, 2024
@@ -71,7 +70,7 @@ impl PtcgScraper {
         link: &str,
     ) -> Result<Vec<TcgCollectorCardDetail>, Error> {
         let url = format!("{}?displayAs=list", link);
-        let source = Self::get_source(&url).await?;
+        let source = get_source(&url).await?;
         let document = scraper::Html::parse_document(&source);
 
         let exp_code_sel = &Selector::parse("#card-search-result-title-expansion-code").unwrap();
@@ -89,7 +88,7 @@ impl PtcgScraper {
             let name_sel = &Selector::parse(".card-list-item-entry-text").unwrap();
             let url_path = item.select(name_sel).next().unwrap().attr("href").unwrap();
             let url = format!("https://www.tcgcollector.com{}", url_path);
-            let html = Self::get_source(&url).await?;
+            let html = get_source(&url).await?;
 
             let name = item.select(name_sel).next().unwrap().inner_trim();
 
@@ -122,7 +121,7 @@ impl PtcgScraper {
         link: &str,
     ) -> Result<Vec<TcgCollectorCardRarity>, Error> {
         let url = format!("{}?displayAs=list", link);
-        let source = Self::get_source(&url).await?;
+        let source = get_source(&url).await?;
         let document = scraper::Html::parse_document(&source);
 
         let card_items_sel = &Selector::parse(".card-list-item").unwrap();
@@ -146,39 +145,6 @@ impl PtcgScraper {
         }
 
         Ok(cards)
-    }
-    async fn fetch_card_detail(&self, url_path: &str) -> Result<Detail, Error> {
-        let url = format!("https://www.tcgcollector.com{}", url_path);
-        let source = Self::get_source(&url).await?;
-        let document = scraper::Html::parse_document(&source);
-
-        let desc_sel = &Selector::parse("#card-description").unwrap();
-        let desc = document.select(desc_sel).next().map(|d| d.inner_trim());
-
-        let skill1_name_en_sel = &Selector::parse(
-            "#card-info-body > div.card-attack > div > div.card-attack-header-text > div",
-        )
-        .unwrap();
-        let skill1_name_en = document
-            .select(skill1_name_en_sel)
-            .next()
-            .map(|s| s.inner_trim());
-
-        let skill1_damage_sel = &Selector::parse(
-            "#card-info-body > div.card-attack > div > div.card-attack-header-text > span",
-        )
-        .unwrap();
-        let skill1_damage = document
-            .select(skill1_damage_sel)
-            .next()
-            .map(|s| s.inner_trim());
-
-        let card = Detail {
-            desc,
-            skill1_name_en,
-            skill1_damage,
-        };
-        Ok(card)
     }
     pub async fn fetch_card_detail2(
         &self,
@@ -220,20 +186,6 @@ impl PtcgScraper {
     }
 }
 
-trait Inner {
-    fn inner_trim(&self) -> String;
-    fn inner_lowercase_trim(&self) -> String;
-}
-
-impl<'a> Inner for ElementRef<'a> {
-    fn inner_trim(&self) -> String {
-        self.inner_html().trim().to_string()
-    }
-    fn inner_lowercase_trim(&self) -> String {
-        self.inner_html().trim().to_lowercase()
-    }
-}
-
 #[derive(Debug)]
 pub struct PtcgJpExpansion {
     pub name: String,
@@ -269,13 +221,6 @@ pub struct PtcgJpCard {
     pub skill1_name_en: Option<String>,
     pub skill1_damage: Option<String>,
     pub rarity: Option<Rarity>,
-}
-
-#[derive(Debug, Clone)]
-struct Detail {
-    desc: Option<String>,
-    skill1_name_en: Option<String>,
-    skill1_damage: Option<String>,
 }
 
 struct PtcgRarity<'a>(&'a str);

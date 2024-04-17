@@ -1,13 +1,16 @@
 mod one_piece;
-mod pokemon;
+mod ptcg;
 mod ptcg_jp;
 mod ws;
 mod yugioh;
-use self::{one_piece::OnePiece, pokemon::PokemonTrainer, ptcg_jp::PtcgJp, ws::Ws, yugioh::Yugioh};
+
+use self::{one_piece::OnePiece, ptcg::Ptcg, ptcg_jp::PtcgJp, ws::Ws, yugioh::Yugioh};
 use crate::{
-    limitless_scraper::LimitlessScraper, one_piece_scraper::OnePieceScraper,
-    pokemon_trainer_scraper::PokemonTrainerSiteScraper, ptcg_jp_scraper::PtcgScraper,
-    repository::Repository, ws_scraper::WsScraper, yugioh_scraper::YugiohScraper,
+    repository::Repository,
+    scraper::{
+        one_piece::OnePieceScraper, ptcg::PokemonTrainerSiteScraper, ptcg_jp::PtcgScraper,
+        ws::WsScraper, yugioh::YugiohScraper,
+    },
 };
 use std::{io::Write, path::Path};
 
@@ -28,21 +31,16 @@ async fn download<T: AsRef<Path>>(url: url::Url, save_path: T) -> Result<(), cra
 
 pub struct Application {
     repository: Repository,
-    limitless_scraper: LimitlessScraper,
 }
 
 impl Application {
     pub fn new(url: &str) -> Self {
         let repository = Repository::new(url);
-        let limitless_scraper = LimitlessScraper::new();
-        Self {
-            repository,
-            limitless_scraper,
-        }
+        Self { repository }
     }
-    pub fn pokemon_trainer(&self) -> PokemonTrainer {
+    pub fn pokemon_trainer(&self) -> Ptcg {
         let scraper = PokemonTrainerSiteScraper::new();
-        PokemonTrainer {
+        Ptcg {
             repository: self.repository.clone(),
             scraper,
         }
@@ -67,9 +65,6 @@ impl Application {
             scraper,
             repository: self.repository.clone(),
         }
-    }
-    pub async fn poc(&self) {
-        self.limitless_scraper.poc().await;
     }
     pub fn ptcg_jp(&self) -> PtcgJp {
         let scraper = PtcgScraper {};
