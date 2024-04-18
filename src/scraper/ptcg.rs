@@ -1,4 +1,4 @@
-use crate::{domain::Rarity, error::Error};
+use crate::{domain::PtcgRarity, error::Error};
 use chrono::NaiveDate;
 use derive_builder::Builder;
 use html_escape::decode_html_entities;
@@ -34,15 +34,15 @@ pub struct ThePTCGCard {
     pub set_code: Option<String>,
 }
 
-pub struct PokemonTrainerSiteScraper {}
+pub struct PtcgScraper {}
 
-impl PokemonTrainerSiteScraper {
+impl PtcgScraper {
     pub fn new() -> Self {
         Self {}
     }
     pub async fn fetch_expansion(&self) -> Result<Vec<PtcgExpansion>, Error> {
         let mut site_url = format!("{}/tw/card-search", POKEMON_TRAINER_SITE_URL_BASE);
-        let mut psets = vec![];
+        let mut exps = vec![];
         loop {
             let source = get_source(&site_url).await?;
             let document = scraper::Html::parse_document(&source);
@@ -78,7 +78,7 @@ impl PokemonTrainerSiteScraper {
                     name: decoded_name.to_string(),
                     release_date,
                 };
-                psets.push(pset);
+                exps.push(pset);
             }
             let next_page_link_selector = &Selector::parse("li.paginationItem.next a")
                 .map_err(|e| ScraperError::ScraperBackend(e.to_string()))?;
@@ -90,14 +90,14 @@ impl PokemonTrainerSiteScraper {
             }
         }
 
-        Ok(psets)
+        Ok(exps)
     }
-    pub async fn get_fetchables_by_set(&self, set_code: &str) -> Result<Vec<String>, Error> {
-        let mut set_url =
-            format!("https://asia.pokemon-card.com/tw/card-search/list/?expansionCodes={set_code}");
+    pub async fn get_fetchables_by_exp(&self, exp_code: &str) -> Result<Vec<String>, Error> {
+        let mut exp_url =
+            format!("https://asia.pokemon-card.com/tw/card-search/list/?expansionCodes={exp_code}");
         let mut card_codes = vec![];
         loop {
-            let source = get_source(&set_url).await?;
+            let source = get_source(&exp_url).await?;
             let document = scraper::Html::parse_document(&source);
             let card_selector = &Selector::parse(".card a")
                 .map_err(|e| ScraperError::ScraperBackend(e.to_string()))?;
@@ -111,7 +111,7 @@ impl PokemonTrainerSiteScraper {
                 .map_err(|e| ScraperError::ScraperBackend(e.to_string()))?;
             match document.select(next_selector).next() {
                 Some(e) => {
-                    set_url = format!(
+                    exp_url = format!(
                         "https://asia.pokemon-card.com{}",
                         e.value().attr("href").unwrap()
                     )
@@ -183,26 +183,26 @@ impl PokemonTrainerSiteScraper {
         let card = card_builder.build().unwrap();
         Ok(card)
     }
-    pub async fn rarity_ids(&self, rarity: &Rarity) -> Result<Vec<String>, Error> {
+    pub async fn rarity_ids(&self, rarity: &PtcgRarity) -> Result<Vec<String>, Error> {
         let rarity_label_number = match rarity {
-            Rarity::C => 1,
-            Rarity::U => 2,
-            Rarity::R => 3,
-            Rarity::RR => 4,
-            Rarity::RRR => 5,
-            Rarity::PR => 6,
-            Rarity::TR => 7,
-            Rarity::SR => 8,
-            Rarity::HR => 9,
-            Rarity::UR => 10,
-            Rarity::Unknown => 11,
-            Rarity::K => 12,
-            Rarity::A => 13,
-            Rarity::AR => 14,
-            Rarity::SAR => 15,
-            Rarity::S => 16,
-            Rarity::SSR => 17,
-            Rarity::ACE => 18,
+            PtcgRarity::C => 1,
+            PtcgRarity::U => 2,
+            PtcgRarity::R => 3,
+            PtcgRarity::RR => 4,
+            PtcgRarity::RRR => 5,
+            PtcgRarity::PR => 6,
+            PtcgRarity::TR => 7,
+            PtcgRarity::SR => 8,
+            PtcgRarity::HR => 9,
+            PtcgRarity::UR => 10,
+            PtcgRarity::Unknown => 11,
+            PtcgRarity::K => 12,
+            PtcgRarity::A => 13,
+            PtcgRarity::AR => 14,
+            PtcgRarity::SAR => 15,
+            PtcgRarity::S => 16,
+            PtcgRarity::SSR => 17,
+            PtcgRarity::ACE => 18,
             _ => 0,
         };
         let mut ids = vec![];

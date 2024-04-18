@@ -1,14 +1,14 @@
 use chrono::NaiveDate;
 use scraper::Selector;
 
-use crate::{domain::Rarity, error::Error};
+use crate::{domain::PtcgRarity, error::Error};
 
 use super::{get_source, Inner};
 
-pub struct PtcgScraper {}
+pub struct TcgCollectorScraper {}
 
-impl PtcgScraper {
-    pub async fn fetch_tc_exps(&self) -> Result<Vec<PtcgJpExpansion>, Error> {
+impl TcgCollectorScraper {
+    pub async fn fetch_exps(&self) -> Result<Vec<PtcgJpExpansion>, Error> {
         let url = "https://www.tcgcollector.com/expansions/jp?collectionProgressMode=anyCardVariant&releaseDateOrder=newToOld&displayAs=logos";
         let source = get_source(url).await?;
         let document = scraper::Html::parse_document(&source);
@@ -65,7 +65,7 @@ impl PtcgScraper {
         Ok(exps)
     }
 
-    pub async fn fetch_tcg_collector_card_detail_html(
+    pub async fn fetch_card_detail_html(
         &self,
         link: &str,
     ) -> Result<Vec<TcgCollectorCardDetail>, Error> {
@@ -101,7 +101,7 @@ impl PtcgScraper {
                 .next()
                 .map(|s| s.attr("title").unwrap_or_default())
                 .unwrap_or_default();
-            let rarity: Rarity = PtcgRarity(&rarity).into();
+            let rarity: PtcgRarity = TcgCollectorRarity(&rarity).into();
 
             let card = TcgCollectorCardDetail {
                 name,
@@ -116,7 +116,7 @@ impl PtcgScraper {
 
         Ok(cards)
     }
-    pub async fn fetch_tcg_collector_card_rarity(
+    pub async fn fetch_card_rarity(
         &self,
         link: &str,
     ) -> Result<Vec<TcgCollectorCardRarity>, Error> {
@@ -139,14 +139,14 @@ impl PtcgScraper {
                 .next()
                 .map(|s| s.attr("title").unwrap_or_default())
                 .unwrap_or_default();
-            let rarity: Rarity = PtcgRarity(&rarity).into();
+            let rarity: PtcgRarity = TcgCollectorRarity(&rarity).into();
             let card = TcgCollectorCardRarity { rarity, url };
             cards.push(card);
         }
 
         Ok(cards)
     }
-    pub async fn fetch_card_detail2(
+    pub async fn fetch_card_detail(
         &self,
         detail: TcgCollectorCardDetail,
     ) -> Result<PtcgJpCard, Error> {
@@ -198,7 +198,7 @@ pub struct PtcgJpExpansion {
 
 #[derive(Debug, Clone)]
 pub struct TcgCollectorCardRarity {
-    pub rarity: Rarity,
+    pub rarity: PtcgRarity,
     pub url: String,
 }
 
@@ -209,7 +209,7 @@ pub struct TcgCollectorCardDetail {
     pub exp_code: String,
     pub html: String,
     pub url: String,
-    pub rarity: Option<Rarity>,
+    pub rarity: Option<PtcgRarity>,
 }
 
 #[derive(Debug, Clone)]
@@ -220,35 +220,35 @@ pub struct PtcgJpCard {
     pub desc: Option<String>,
     pub skill1_name_en: Option<String>,
     pub skill1_damage: Option<String>,
-    pub rarity: Option<Rarity>,
+    pub rarity: Option<PtcgRarity>,
 }
 
-struct PtcgRarity<'a>(&'a str);
+struct TcgCollectorRarity<'a>(&'a str);
 
-impl<'a> From<PtcgRarity<'a>> for Rarity {
-    fn from(value: PtcgRarity<'a>) -> Self {
+impl<'a> From<TcgCollectorRarity<'a>> for PtcgRarity {
+    fn from(value: TcgCollectorRarity<'a>) -> Self {
         match value.0 {
-            "Ultra Rare (UR)" => Rarity::UR,
-            "Shiny Super Rare (SSR)" => Rarity::SSR,
-            "ACE SPEC Rare (ACE)" => Rarity::ACE,
-            "Hyper Rare (HR)" => Rarity::HR,
-            "Super Rare (SR)" => Rarity::SR,
-            "Special Art Rare (SAR)" => Rarity::SAR,
-            "Character Super Rare (CSR)" => Rarity::CSR,
-            "Art Rare (AR)" => Rarity::AR,
-            "Character Rare (CHR)" => Rarity::CHR,
-            "Shiny (S)" => Rarity::S,
-            "Amazing Rare" => Rarity::A,
-            "Rare Holo" => Rarity::H,
-            "Radiant Rare (K)" => Rarity::K,
-            "Promo" => Rarity::PR,
-            "Triple Rare (RRR)" => Rarity::RRR,
-            "Double Rare (RR)" => Rarity::RR,
-            "Rare (R)" => Rarity::R,
-            "Uncommon (U)" => Rarity::U,
-            "Common (C)" => Rarity::C,
-            "Trainer Rare (TR)" => Rarity::TR,
-            _ => Rarity::Unknown,
+            "Ultra Rare (UR)" => PtcgRarity::UR,
+            "Shiny Super Rare (SSR)" => PtcgRarity::SSR,
+            "ACE SPEC Rare (ACE)" => PtcgRarity::ACE,
+            "Hyper Rare (HR)" => PtcgRarity::HR,
+            "Super Rare (SR)" => PtcgRarity::SR,
+            "Special Art Rare (SAR)" => PtcgRarity::SAR,
+            "Character Super Rare (CSR)" => PtcgRarity::CSR,
+            "Art Rare (AR)" => PtcgRarity::AR,
+            "Character Rare (CHR)" => PtcgRarity::CHR,
+            "Shiny (S)" => PtcgRarity::S,
+            "Amazing Rare" => PtcgRarity::A,
+            "Rare Holo" => PtcgRarity::H,
+            "Radiant Rare (K)" => PtcgRarity::K,
+            "Promo" => PtcgRarity::PR,
+            "Triple Rare (RRR)" => PtcgRarity::RRR,
+            "Double Rare (RR)" => PtcgRarity::RR,
+            "Rare (R)" => PtcgRarity::R,
+            "Uncommon (U)" => PtcgRarity::U,
+            "Common (C)" => PtcgRarity::C,
+            "Trainer Rare (TR)" => PtcgRarity::TR,
+            _ => PtcgRarity::Unknown,
         }
     }
 }

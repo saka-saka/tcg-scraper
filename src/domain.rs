@@ -54,7 +54,7 @@ pub struct PokemonCard {
     sqlx::Type,
 )]
 #[sqlx(type_name = "ptcg_rarity_enum")]
-pub enum Rarity {
+pub enum PtcgRarity {
     #[default]
     UR,
     SSR,

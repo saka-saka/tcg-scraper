@@ -4,8 +4,8 @@ use crate::error::Error;
 
 pub mod one_piece;
 pub mod ptcg;
-pub mod ptcg_jp;
 pub mod scraper_error;
+pub mod tcg_collector;
 pub mod ws;
 pub mod yugioh;
 

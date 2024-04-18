@@ -8,7 +8,7 @@ use self::{one_piece::OnePiece, ptcg::Ptcg, ptcg_jp::PtcgJp, ws::Ws, yugioh::Yug
 use crate::{
     repository::Repository,
     scraper::{
-        one_piece::OnePieceScraper, ptcg::PokemonTrainerSiteScraper, ptcg_jp::PtcgScraper,
+        one_piece::OnePieceScraper, ptcg::PtcgScraper, tcg_collector::TcgCollectorScraper,
         ws::WsScraper, yugioh::YugiohScraper,
     },
 };
@@ -39,7 +39,7 @@ impl Application {
         Self { repository }
     }
     pub fn pokemon_trainer(&self) -> Ptcg {
-        let scraper = PokemonTrainerSiteScraper::new();
+        let scraper = PtcgScraper::new();
         Ptcg {
             repository: self.repository.clone(),
             scraper,
@@ -67,7 +67,7 @@ impl Application {
         }
     }
     pub fn ptcg_jp(&self) -> PtcgJp {
-        let scraper = PtcgScraper {};
+        let scraper = TcgCollectorScraper {};
         PtcgJp {
             scraper,
             repository: self.repository.clone(),

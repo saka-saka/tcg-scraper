@@ -1,7 +1,7 @@
-use crate::domain::{LastFetchedAt, PokemonCard, Rarity};
+use crate::domain::{LastFetchedAt, PokemonCard, PtcgRarity};
 use crate::scraper::one_piece::{OnePieceCard, OnePieceCardRarity, OnePieceCardType};
 use crate::scraper::ptcg::{PtcgExpansion, ThePTCGCard};
-use crate::scraper::ptcg_jp::{
+use crate::scraper::tcg_collector::{
     PtcgJpCard, PtcgJpExpansion, TcgCollectorCardDetail, TcgCollectorCardRarity,
 };
 use crate::scraper::ws::WsCard;
@@ -65,7 +65,7 @@ impl Repository {
         for c in card_rarities {
             sqlx::query!(
                 "UPDATE tcg_collector SET rarity = $1 WHERE url = $2",
-                c.rarity as Rarity,
+                c.rarity as PtcgRarity,
                 c.url
             )
             .execute(&self.pool)
@@ -229,7 +229,7 @@ impl Repository {
     pub async fn update_the_ptcg_rarity(
         &self,
         ids: Vec<String>,
-        rarity: &Rarity,
+        rarity: &PtcgRarity,
     ) -> Result<(), RepositoryError> {
         dbg!(rarity.to_string());
         sqlx::query!(

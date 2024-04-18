@@ -1,8 +1,8 @@
 use crate::{
-    domain::{PokemonCard, Rarity},
+    domain::{PokemonCard, PtcgRarity},
     error::Error,
     repository::Repository,
-    scraper::ptcg::PokemonTrainerSiteScraper,
+    scraper::ptcg::PtcgScraper,
 };
 use futures::{StreamExt, TryStreamExt};
 use strum::IntoEnumIterator;
@@ -12,7 +12,7 @@ use super::download;
 
 pub struct Ptcg {
     pub repository: Repository,
-    pub scraper: PokemonTrainerSiteScraper,
+    pub scraper: PtcgScraper,
 }
 
 impl Ptcg {
@@ -45,7 +45,7 @@ impl Ptcg {
         codes
             .map_err(Error::from)
             .try_for_each(|code| async move {
-                let fetchable_codes = self.scraper.get_fetchables_by_set(&code).await?;
+                let fetchable_codes = self.scraper.get_fetchables_by_exp(&code).await?;
                 self.repository
                     .upsert_fetchable(fetchable_codes, &code)
                     .await?;
@@ -74,7 +74,7 @@ impl Ptcg {
         Ok(())
     }
     pub async fn update_rarity(&self) -> Result<(), Error> {
-        for rarity in Rarity::iter() {
+        for rarity in PtcgRarity::iter() {
             let ids = self.scraper.rarity_ids(&rarity).await?;
             self.repository.update_the_ptcg_rarity(ids, &rarity).await?;
         }
