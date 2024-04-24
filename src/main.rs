@@ -51,6 +51,7 @@ enum PtcgCommands {
 #[derive(Subcommand)]
 enum WsCommands {
     Scrape,
+    DownloadImages,
     ExportCsv,
 }
 
@@ -131,12 +132,16 @@ async fn main() -> Result<()> {
         }
         Commands::Ws(WsCommands::Scrape) => {
             let ws = application.ws();
-            ws.ws_scrape().await?;
+            ws.scrape().await?;
         }
         Commands::Ws(WsCommands::ExportCsv) => {
             let wtr = std::io::stdout();
             let ws = application.ws();
-            ws.ws_export_csv(wtr).await?;
+            ws.export_csv(wtr).await?;
+        }
+        Commands::Ws(WsCommands::DownloadImages) => {
+            let ws = application.ws();
+            ws.download_images().await?;
         }
         Commands::OnePiece(OnePieceCommands::Scrape) => {
             application.one_piece().scrape_one_piece().await?;
