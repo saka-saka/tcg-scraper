@@ -1,7 +1,7 @@
 use derive_builder::Builder;
 use serde::Deserialize;
 use sqlx::types::time::OffsetDateTime;
-use strum_macros::EnumString;
+use strum::EnumString;
 use time::macros::format_description;
 
 #[derive(Debug, Clone)]
@@ -45,12 +45,12 @@ pub struct PokemonCard {
 #[derive(
     Deserialize,
     EnumString,
-    strum_macros::Display,
+    strum::Display,
     Clone,
     Debug,
     PartialEq,
     Default,
-    strum_macros::EnumIter,
+    strum::EnumIter,
     sqlx::Type,
 )]
 #[sqlx(type_name = "ptcg_rarity_enum")]

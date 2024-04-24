@@ -3,7 +3,7 @@ use std::path::Path;
 use scraper::Selector;
 use serde::Deserialize;
 use serde_json::json;
-use strum_macros::AsRefStr;
+use strum::AsRefStr;
 
 use crate::{
     domain::LastFetchedAt,
