@@ -141,7 +141,8 @@ async fn main() -> Result<()> {
         }
         Commands::Ws(WsCommands::DownloadImages) => {
             let ws = application.ws();
-            ws.download_images().await?;
+            ws.download_images("asia-tcg-marketplace-dataset", "ws_images")
+                .await?;
         }
         Commands::OnePiece(OnePieceCommands::Scrape) => {
             application.one_piece().scrape_one_piece().await?;

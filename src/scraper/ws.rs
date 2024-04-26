@@ -86,7 +86,7 @@ impl WsScraper {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct WsCard {
     pub name: String,
     pub code: String,

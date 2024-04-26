@@ -4,6 +4,8 @@ mod ptcg_jp;
 mod ws;
 mod yugioh;
 
+use google_cloud_storage::http::objects::upload::{Media, UploadObjectRequest, UploadType};
+
 use self::{one_piece::OnePiece, ptcg::Ptcg, ptcg_jp::PtcgJp, ws::Ws, yugioh::Yugioh};
 use crate::{
     repository::Repository,
@@ -12,7 +14,7 @@ use crate::{
         ws::WsScraper, yugioh::YugiohScraper,
     },
 };
-use std::{io::Write, path::Path};
+use std::{borrow::Cow, io::Write, path::Path};
 
 async fn download<T: AsRef<Path>>(url: url::Url, save_path: T) -> Result<(), crate::error::Error> {
     let result = reqwest::get(url).await?;
@@ -27,6 +29,37 @@ async fn download<T: AsRef<Path>>(url: url::Url, save_path: T) -> Result<(), cra
     let bytes = result.bytes().await?;
     let _ = file.write(&bytes)?;
     Ok(())
+}
+
+#[derive(Clone)]
+pub struct GcsDownloader {
+    pub client: google_cloud_storage::client::Client,
+    pub bucket: String,
+    pub base_path: String,
+}
+
+impl GcsDownloader {
+    async fn download(&self, url: url::Url) -> Result<(), crate::error::Error> {
+        let mut iter = url.path_segments().unwrap().rev();
+        let filename = iter.next().unwrap();
+        let folder = iter.next().unwrap();
+        let resp = reqwest::get(url.clone()).await.unwrap();
+        let mut media = Media::new(format!("{}/{folder}/{filename}", self.base_path));
+        media.content_type = Cow::from("image/jpeg");
+        let _result = self
+            .client
+            .upload_streamed_object(
+                &UploadObjectRequest {
+                    bucket: self.bucket.clone(),
+                    ..Default::default()
+                },
+                resp.bytes_stream(),
+                &UploadType::Simple(media),
+            )
+            .await
+            .unwrap();
+        Ok(())
+    }
 }
 
 pub struct Application {
