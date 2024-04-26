@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE pokemon_trainer_printing SET rarity = $1 WHERE code = ANY($2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "TextArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "c62855235efc45dd80c9bf9e53e34df262869e23f914113e154570d09f5faebf"
+}

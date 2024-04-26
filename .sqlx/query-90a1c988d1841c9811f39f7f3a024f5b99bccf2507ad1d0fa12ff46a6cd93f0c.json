@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO pokemon_trainer_fetchable_card(code, fetched, expansion_code) VALUES($1, False, $2)\n                ON CONFLICT(code)\n                DO UPDATE\n                    SET code = $1, fetched = False, expansion_code = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "90a1c988d1841c9811f39f7f3a024f5b99bccf2507ad1d0fa12ff46a6cd93f0c"
+}

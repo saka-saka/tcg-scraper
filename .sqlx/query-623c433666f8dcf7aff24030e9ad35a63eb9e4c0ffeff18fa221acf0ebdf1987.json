@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            -- INSERT INTO pokemon_trainer_printing(code, name, kind, number, rarity, expansion_code, name_en, skill1_name_en, skill1_damage, card_description_en)\n            SELECT\n                'd|' || code || '|' || $4 || '|' || $5 as code\n            FROM pokemon_trainer_printing\n            WHERE name_en = $1 AND (skill1_name_en = $2 OR card_description_en = $3)\n            LIMIT 1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "code",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "623c433666f8dcf7aff24030e9ad35a63eb9e4c0ffeff18fa221acf0ebdf1987"
+}

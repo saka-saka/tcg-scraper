@@ -1,0 +1,48 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO one_piece(code, name, img_src, rarity, set_name, type, get_info)\n            VALUES($1, $2, $3, $4, $5, $6, $7)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        {
+          "Custom": {
+            "name": "op_rarity_enum",
+            "kind": {
+              "Enum": [
+                "SP",
+                "R",
+                "SEC",
+                "C",
+                "P",
+                "UC",
+                "SR",
+                "L"
+              ]
+            }
+          }
+        },
+        "Text",
+        {
+          "Custom": {
+            "name": "op_type_enum",
+            "kind": {
+              "Enum": [
+                "Leader",
+                "Event",
+                "Character",
+                "Stage"
+              ]
+            }
+          }
+        },
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "b0c30f81f997b9041d518f6b434451e8841fab133e5234aa26335397d7365929"
+}

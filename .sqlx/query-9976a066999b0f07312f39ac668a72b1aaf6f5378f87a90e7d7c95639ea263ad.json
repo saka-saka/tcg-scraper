@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE ws_progress SET current_page = $1 WHERE id = (SELECT id FROM ws_progress_id_seq)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "9976a066999b0f07312f39ac668a72b1aaf6f5378f87a90e7d7c95639ea263ad"
+}

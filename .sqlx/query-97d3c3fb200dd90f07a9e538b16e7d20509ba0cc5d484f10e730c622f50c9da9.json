@@ -1,0 +1,50 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT code, name, set_code, img_src, rarity, set_name FROM ws_cards",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "code",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "set_code",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "img_src",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "rarity",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "set_name",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      false
+    ]
+  },
+  "hash": "97d3c3fb200dd90f07a9e538b16e7d20509ba0cc5d484f10e730c622f50c9da9"
+}

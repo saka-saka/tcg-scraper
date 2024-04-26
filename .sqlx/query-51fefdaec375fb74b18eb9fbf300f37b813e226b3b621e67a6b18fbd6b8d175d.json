@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT current_page FROM ws_progress WHERE id = (SELECT id FROM ws_progress_id_seq)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "current_page",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "51fefdaec375fb74b18eb9fbf300f37b813e226b3b621e67a6b18fbd6b8d175d"
+}

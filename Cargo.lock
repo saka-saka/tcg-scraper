@@ -2421,41 +2421,6 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "scraper"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "clap",
- "color-eyre",
- "csv",
- "derive_builder 0.20.0",
- "dotenvy",
- "fantoccini",
- "futures",
- "google-cloud-storage",
- "headless_chrome",
- "html-escape",
- "lazy_static",
- "pest",
- "pest_derive",
- "regex",
- "reqwest 0.12.3",
- "scraper 0.19.0",
- "serde",
- "serde_json",
- "serde_qs",
- "sqlx",
- "strum",
- "thiserror",
- "time",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "url",
- "uuid",
-]
-
-[[package]]
-name = "scraper"
 version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5b80b33679ff7a0ea53d37f3b39de77ea0c75b12c5805ac43ec0c33b3051af1b"
@@ -3073,6 +3038,41 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ba323866e5d033818e3240feeb9f7db2c4296674e4d9e16b97b7bf8f490434e8"
 dependencies = [
  "pin-utils",
+]
+
+[[package]]
+name = "tcg-scraper"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "clap",
+ "color-eyre",
+ "csv",
+ "derive_builder 0.20.0",
+ "dotenvy",
+ "fantoccini",
+ "futures",
+ "google-cloud-storage",
+ "headless_chrome",
+ "html-escape",
+ "lazy_static",
+ "pest",
+ "pest_derive",
+ "regex",
+ "reqwest 0.12.3",
+ "scraper",
+ "serde",
+ "serde_json",
+ "serde_qs",
+ "sqlx",
+ "strum",
+ "thiserror",
+ "time",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "url",
+ "uuid",
 ]
 
 [[package]]

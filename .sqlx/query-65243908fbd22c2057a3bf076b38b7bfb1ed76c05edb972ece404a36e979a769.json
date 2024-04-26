@@ -1,0 +1,26 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT fetchable.code, fetchable.expansion_code\n            FROM pokemon_trainer_fetchable_card fetchable\n            INNER JOIN pokemon_trainer_printing printing ON fetchable.code = printing.code\n            WHERE printing.name is NULL\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "code",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "expansion_code",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "65243908fbd22c2057a3bf076b38b7bfb1ed76c05edb972ece404a36e979a769"
+}

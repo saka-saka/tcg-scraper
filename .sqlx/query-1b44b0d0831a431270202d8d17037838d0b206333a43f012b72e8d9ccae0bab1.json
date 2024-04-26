@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO yugioh_expansion_link(url) VALUES($1) ON CONFLICT(url) DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "1b44b0d0831a431270202d8d17037838d0b206333a43f012b72e8d9ccae0bab1"
+}

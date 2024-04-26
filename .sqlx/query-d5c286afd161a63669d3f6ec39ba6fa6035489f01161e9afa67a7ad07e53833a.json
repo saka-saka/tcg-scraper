@@ -1,0 +1,45 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE tcg_collector SET rarity = $1 WHERE url = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        {
+          "Custom": {
+            "name": "ptcg_rarity_enum",
+            "kind": {
+              "Enum": [
+                "UR",
+                "SSR",
+                "ACE",
+                "HR",
+                "SR",
+                "SAR",
+                "CSR",
+                "AR",
+                "CHR",
+                "S",
+                "A",
+                "H",
+                "K",
+                "PR",
+                "RRR",
+                "RR",
+                "R",
+                "U",
+                "C",
+                "TR",
+                "TD",
+                "Unknown"
+              ]
+            }
+          }
+        },
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d5c286afd161a63669d3f6ec39ba6fa6035489f01161e9afa67a7ad07e53833a"
+}

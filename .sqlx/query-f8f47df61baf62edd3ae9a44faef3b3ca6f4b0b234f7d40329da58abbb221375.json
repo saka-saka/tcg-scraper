@@ -1,0 +1,68 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT\n            p.code as id,\n            p.name as name,\n            p.number as number,\n            NULL::bigint as sale_price,\n            p.rarity as rarity,\n            e.code as set_id,\n            e.name as set_name,\n            e.code as set_ref,\n            NULL as remark\n            FROM pokemon_trainer_printing p\n            LEFT JOIN pokemon_trainer_expansion e ON p.expansion_code = e.code",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "number",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "sale_price",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 4,
+        "name": "rarity",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "set_id",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "set_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "set_ref",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "remark",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      null,
+      true,
+      true,
+      true,
+      false,
+      null
+    ]
+  },
+  "hash": "f8f47df61baf62edd3ae9a44faef3b3ca6f4b0b234f7d40329da58abbb221375"
+}

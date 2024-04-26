@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO yugioh_printing_detail(\n            name_jp, name_en, rarity, number, release_date, remark, expansion_name, expansion_code, card_id)\n            VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)\n            ON CONFLICT(card_id, expansion_name, rarity)\n            DO UPDATE\n            SET name_jp = $1, name_en = $2, number = $4, release_date = $5, remark = $6, expansion_code = $7\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "93a190c0dc1663323c9b3870d8dad7cc6930ad707ad1b666e4fd5387caf9985e"
+}

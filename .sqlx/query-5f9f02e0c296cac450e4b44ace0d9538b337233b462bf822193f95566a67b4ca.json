@@ -1,0 +1,68 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT * FROM yugioh_printing_detail",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "card_id",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "name_jp",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "name_en",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "rarity",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "number",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "release_date",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "remark",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "expansion_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "expansion_code",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "5f9f02e0c296cac450e4b44ace0d9538b337233b462bf822193f95566a67b4ca"
+}

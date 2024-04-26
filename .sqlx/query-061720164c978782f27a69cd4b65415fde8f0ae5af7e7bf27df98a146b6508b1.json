@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM yugioh_printing_link WHERE url = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "061720164c978782f27a69cd4b65415fde8f0ae5af7e7bf27df98a146b6508b1"
+}

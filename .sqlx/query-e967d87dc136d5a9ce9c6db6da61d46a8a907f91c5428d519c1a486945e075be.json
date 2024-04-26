@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM yugioh_expansion_link WHERE url = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e967d87dc136d5a9ce9c6db6da61d46a8a907f91c5428d519c1a486945e075be"
+}

@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO yugioh_printing_link(url) VALUES($1) ON CONFLICT(url) DO NOTHING",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "293570e1647149c891016ccabbca63744a0845a3ccb3ac85c29463dd6ae587e5"
+}

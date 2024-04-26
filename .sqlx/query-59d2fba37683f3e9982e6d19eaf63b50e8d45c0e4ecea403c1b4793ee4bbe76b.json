@@ -1,0 +1,19 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO ptcg_jp_expansions(code, name_en, exp_link, symbol_src, logo_src, release_date)\n                            VALUES($1, $2, $3, $4, $5, $6)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Date"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "59d2fba37683f3e9982e6d19eaf63b50e8d45c0e4ecea403c1b4793ee4bbe76b"
+}

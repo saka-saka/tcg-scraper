@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "UPDATE pokemon_trainer_fetchable_card SET fetched = True WHERE code = $1",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "4a4b718714751c7e31190c2f11107b6639743c1e40bcae2504842e04397bbd04"
+}

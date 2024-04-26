@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "INSERT INTO pokemon_trainer_expansion(id, code, series, name, release_date, updated_at)\n              VALUES(gen_random_uuid(), $1, $2, $3, $4, NOW())\n              ON CONFLICT(code)\n              DO UPDATE SET code = $1, series = $2, name = $3, release_date = $4, updated_at = NOW()",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Date"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e35b140678e8ff59ca3f255ee044172b69475bec3ef3b98fac41515386eed649"
+}

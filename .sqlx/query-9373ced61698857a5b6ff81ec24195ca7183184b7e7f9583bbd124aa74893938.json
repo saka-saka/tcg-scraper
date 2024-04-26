@@ -1,0 +1,19 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                UPDATE pokemon_trainer_printing SET\n                name_en = $1,\n                skill1_name_en = $4,\n                skill1_damage = $5,\n                card_description_en = $6\n                WHERE number = $2 AND expansion_code = $3\n                ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "9373ced61698857a5b6ff81ec24195ca7183184b7e7f9583bbd124aa74893938"
+}

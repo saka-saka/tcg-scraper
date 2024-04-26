@@ -1,0 +1,77 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT * FROM pokemon_trainer_printing WHERE number = $1 AND expansion_code = $2",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "code",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "kind",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "number",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "rarity",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "expansion_code",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "name_en",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "skill1_name_en",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "skill1_damage",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 9,
+        "name": "card_description_en",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true,
+      false,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "5d39dc8e2f14b49414e4ec66370026b37444969218922bbccbbb7fc372319565"
+}

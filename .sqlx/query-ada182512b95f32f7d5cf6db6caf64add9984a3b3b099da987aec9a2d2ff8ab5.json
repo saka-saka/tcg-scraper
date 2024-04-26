@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT exp_link\n            FROM pokemon_trainer_expansion pt\n            LEFT JOIN ptcg_jp_expansions jp on pt.code = jp.code",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "exp_link",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "ada182512b95f32f7d5cf6db6caf64add9984a3b3b099da987aec9a2d2ff8ab5"
+}
