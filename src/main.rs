@@ -8,7 +8,6 @@ mod scraper;
 use application::Application;
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::Result;
-use dotenvy::dotenv;
 use std::{thread::sleep, time::Duration};
 use tracing::Level;
 
@@ -75,7 +74,6 @@ enum OnePieceCommands {
 #[tokio::main]
 async fn main() -> Result<()> {
     color_eyre::install()?;
-    dotenv()?;
     let cli = Cli::parse();
     let database_url = std::env::var("DATABASE_URL")?;
     let application = Application::new(&database_url);

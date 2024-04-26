@@ -3049,7 +3049,6 @@ dependencies = [
  "color-eyre",
  "csv",
  "derive_builder 0.20.0",
- "dotenvy",
  "fantoccini",
  "futures",
  "google-cloud-storage",
