@@ -20,7 +20,7 @@ jobs:
           workload_identity_provider: projects/644969258749/locations/global/workloadIdentityPools/github-action/providers/github-action-provider
           service_account: github-action@dev-smoke-364604.iam.gserviceaccount.com
       - name: Login to GAR
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: asia-east1-docker.pkg.dev
           username: oauth2accesstoken
