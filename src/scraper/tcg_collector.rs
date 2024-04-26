@@ -101,7 +101,7 @@ impl TcgCollectorScraper {
                 .next()
                 .map(|s| s.attr("title").unwrap_or_default())
                 .unwrap_or_default();
-            let rarity: PtcgRarity = TcgCollectorRarity(&rarity).into();
+            let rarity: PtcgRarity = TcgCollectorRarity(rarity).into();
 
             let card = TcgCollectorCardDetail {
                 name,
@@ -139,7 +139,7 @@ impl TcgCollectorScraper {
                 .next()
                 .map(|s| s.attr("title").unwrap_or_default())
                 .unwrap_or_default();
-            let rarity: PtcgRarity = TcgCollectorRarity(&rarity).into();
+            let rarity: PtcgRarity = TcgCollectorRarity(rarity).into();
             let card = TcgCollectorCardRarity { rarity, url };
             cards.push(card);
         }

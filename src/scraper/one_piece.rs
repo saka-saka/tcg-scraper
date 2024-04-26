@@ -9,7 +9,7 @@ use crate::{
     domain::LastFetchedAt,
     error::{Error, ErrorCode},
 };
-const BASEURL: &'static str = "https://www.onepiece-cardgame.com";
+const BASEURL: &str = "https://www.onepiece-cardgame.com";
 
 pub(crate) struct OnePieceScraper {}
 impl OnePieceScraper {

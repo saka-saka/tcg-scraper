@@ -13,7 +13,7 @@ impl WsScraper {
 
     pub async fn get_total_pages(&self) -> Result<i32, Error> {
         let url = "https://ws-tcg.com/cardlist/search";
-        let source = Self::get_source(&url).await?;
+        let source = Self::get_source(url).await?;
         let document = scraper::Html::parse_document(&source);
         let selector =
             Selector::parse("#searchResults > p:nth-child(4) > span:nth-child(12) > a").unwrap();
