@@ -2,14 +2,23 @@ mod application;
 mod domain;
 mod error;
 mod export;
+mod handlers;
 mod repository;
 mod scraper;
+mod strategy;
 
 use application::Application;
+use axum::{routing::get, Router};
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::Result;
+use meilisearch_sdk::Client;
+use serde::Deserialize;
+use sqlx::PgPool;
 use std::{thread::sleep, time::Duration};
-use tracing::Level;
+use strategy::Source;
+use tracing::{info, Level};
+
+use crate::handlers::{list, modal, pokemon, prepare, root, search, stylesheets, MyState};
 
 #[derive(Parser)]
 struct Cli {
@@ -29,6 +38,13 @@ enum Commands {
     OnePiece(OnePieceCommands),
     #[command(subcommand)]
     PtcgJp(PtcgJpCommands),
+    #[command(subcommand)]
+    Serve(ServeCommands),
+}
+
+#[derive(Subcommand)]
+enum ServeCommands {
+    Ptcg,
 }
 
 #[derive(Subcommand)]
@@ -45,6 +61,7 @@ enum PtcgCommands {
     Prepare,
     Run,
     ExportCsv,
+    Strategy,
 }
 
 #[derive(Subcommand)]
@@ -71,32 +88,47 @@ enum OnePieceCommands {
     ExportProductCsv,
 }
 
+#[derive(Deserialize, Debug)]
+struct PtcgExpansionDbRow {
+    exp: String,
+    name: String,
+    strategy: String,
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
+    tracing_subscriber::fmt::init();
     color_eyre::install()?;
     let cli = Cli::parse();
     let database_url = std::env::var("DATABASE_URL")?;
     let application = Application::new(&database_url);
-    tracing_subscriber::fmt()
-        .with_max_level(Level::ERROR)
-        .finish();
 
     match &cli.command {
         Commands::Ptcg(commands) => match commands {
             PtcgCommands::Prepare => {
-                let pokemon_trainer = application.pokemon_trainer();
-                pokemon_trainer.update_ptcg_expansion().await?;
+                let pokemon_trainer = application.ptcg();
+                pokemon_trainer.prepare_ptcg_expansions().await?;
                 pokemon_trainer.update_ptcg_fetchable().await?;
                 pokemon_trainer.update_ptcg_printing().await?;
                 pokemon_trainer.download_all_image().await?;
             }
             PtcgCommands::Run => {
-                let pokemon_trainer = application.pokemon_trainer();
+                let pokemon_trainer = application.ptcg();
                 pokemon_trainer.update_rarity().await?;
             }
             PtcgCommands::ExportCsv => {
-                let pokemon_trainer = application.pokemon_trainer();
+                let pokemon_trainer = application.ptcg();
                 let _all_cards = pokemon_trainer.export_pokemon_trainer().await?;
+            }
+            PtcgCommands::Strategy => {
+                let stdin = std::io::stdin();
+                let mut rdr = csv::Reader::from_reader(stdin);
+                for result in rdr.deserialize() {
+                    let record: PtcgExpansionDbRow = result?;
+                    let ptcg = application.ptcg();
+                    let sources: Vec<Source> = serde_json::from_str(&record.strategy)?;
+                    ptcg.from_expansion(sources).await?;
+                }
             }
         },
         Commands::Yugioh(YugiohCommands::BuildExpLink) => {
@@ -181,6 +213,30 @@ async fn main() -> Result<()> {
         Commands::PtcgJp(PtcgJpCommands::Rarity) => {
             let ptcg_jp = application.ptcg_jp();
             ptcg_jp.update_rarity().await?;
+        }
+        Commands::Serve(ServeCommands::Ptcg) => {
+            let meilisearch_url = std::env::var("MEILISEARCH_URL")?;
+            let meilisearch_api_key = std::env::var("MEILISEARCH_API_KEY")?;
+            let client = Client::new(meilisearch_url, Some(meilisearch_api_key));
+            let pool = PgPool::connect(&std::env::var("DATABASE_URL")?).await?;
+            let state = MyState {
+                pool,
+                client,
+                ptcg: application.ptcg(),
+            };
+            let app = Router::new()
+                .route("/", get(root))
+                .route("/search", get(search))
+                .route("/pokemon", get(pokemon))
+                .route("/modal", get(modal))
+                .route("/list", get(list))
+                .route("/prepare", get(prepare))
+                .route("/stylesheets.css", get(stylesheets))
+                .with_state(state);
+            let host = "0.0.0.0:8080";
+            let listener = tokio::net::TcpListener::bind(host).await?;
+            info!("server listening on port {}", host);
+            axum::serve(listener, app).await?;
         }
     }
     Ok(())

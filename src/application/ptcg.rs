@@ -2,7 +2,8 @@ use crate::{
     domain::{PokemonCard, PtcgRarity},
     error::Error,
     repository::Repository,
-    scraper::ptcg::PtcgScraper,
+    scraper::{pokemon_wiki::PokemonWikiScraper, ptcg::PtcgScraper},
+    strategy::{PtcgStrategy, Source, TcgCollectorStrategy, WikiStrategy},
 };
 use futures::{StreamExt, TryStreamExt};
 use strum::IntoEnumIterator;
@@ -10,12 +11,33 @@ use url::Url;
 
 use super::download;
 
+#[derive(Clone)]
 pub struct Ptcg {
     pub repository: Repository,
     pub scraper: PtcgScraper,
+    pub wiki_scraper: PokemonWikiScraper,
 }
 
 impl Ptcg {
+    pub async fn from_expansion(&self, sources: Vec<Source>) -> Result<(), Error> {
+        for source in sources {
+            match source {
+                Source::Ptcg(PtcgStrategy::All) => {}
+                Source::Ptcg(PtcgStrategy::Pic) => {}
+                Source::Wiki(WikiStrategy::Data(data)) => {
+                    let cards = self
+                        .wiki_scraper
+                        .fetch_card_data_by_exp_url(&data.url().to_string())
+                        .await?;
+                    self.repository.upsert_pokewiki(cards).await?;
+                }
+                Source::TcgCollector(TcgCollectorStrategy::Pic(data)) => {}
+                Source::TcgCollector(TcgCollectorStrategy::PicByName(data)) => {}
+                Source::TcgCollector(TcgCollectorStrategy::PicMappings(data)) => {}
+            }
+        }
+        Ok(())
+    }
     pub async fn download_all_image(&self) -> Result<(), Error> {
         let codes = self.repository.get_ptcg_codes();
         codes
@@ -33,7 +55,7 @@ impl Ptcg {
             .await?;
         Ok(())
     }
-    pub async fn update_ptcg_expansion(&self) -> Result<(), Error> {
+    pub async fn prepare_ptcg_expansions(&self) -> Result<(), Error> {
         let expansions = self.scraper.fetch_expansion().await?;
         for exp in expansions {
             self.repository.upsert_ptcg_expansion(&exp).await?;

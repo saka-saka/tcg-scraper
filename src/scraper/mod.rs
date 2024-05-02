@@ -3,6 +3,7 @@ use scraper::ElementRef;
 use crate::error::Error;
 
 pub mod one_piece;
+pub mod pokemon_wiki;
 pub mod ptcg;
 pub mod scraper_error;
 pub mod tcg_collector;

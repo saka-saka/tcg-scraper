@@ -1,5 +1,6 @@
 use crate::domain::{LastFetchedAt, PokemonCard, PtcgRarity};
 use crate::scraper::one_piece::{OnePieceCard, OnePieceCardRarity, OnePieceCardType};
+use crate::scraper::pokemon_wiki::PokemonWikiCard;
 use crate::scraper::ptcg::{PtcgExpansion, ThePTCGCard};
 use crate::scraper::tcg_collector::{
     PtcgJpCard, PtcgJpExpansion, TcgCollectorCardDetail, TcgCollectorCardRarity,
@@ -17,9 +18,38 @@ pub struct Repository {
 }
 
 impl Repository {
-    pub fn new(url: &str) -> Self {
-        let pool = PgPoolOptions::new().connect_lazy(url).unwrap();
-        Self { pool }
+    pub fn from_dsn(url: &str) -> Result<Self, RepositoryError> {
+        let pool = PgPoolOptions::new().connect_lazy(url)?;
+        Ok(Self { pool })
+    }
+
+    pub async fn upsert_pokewiki(
+        &self,
+        cards: Vec<PokemonWikiCard>,
+    ) -> Result<(), RepositoryError> {
+        let unzipped = cards
+            .into_iter()
+            .fold((vec![], vec![], vec![], vec![]), |mut acc, card| {
+                acc.0.push(card.number);
+                acc.1.push(card.name);
+                acc.2.push(card.exp_code);
+                acc.3.push(card.rarity);
+                acc
+            });
+        sqlx::query!(
+            "
+    INSERT INTO pokewiki(number, name, exp_code, rarity)
+    SELECT *
+    FROM UNNEST($1::TEXT[], $2::TEXT[], $3::TEXT[], $4::ptcg_rarity_enum[])
+    ",
+            &unzipped.0,
+            &unzipped.1,
+            &unzipped.2,
+            &unzipped.3 as &Vec<PtcgRarity>,
+        )
+        .execute(&self.pool)
+        .await?;
+        Ok(())
     }
     pub fn get_tc_details(&self) -> BoxStream<Result<TcgCollectorCardDetail, RepositoryError>> {
         sqlx::query_as!(

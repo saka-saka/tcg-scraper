@@ -1,6 +1,9 @@
 use derive_builder::Builder;
 use serde::Deserialize;
-use sqlx::types::time::OffsetDateTime;
+use sqlx::{
+    postgres::{PgHasArrayType, PgTypeInfo},
+    types::time::OffsetDateTime,
+};
 use strum::EnumString;
 use time::macros::format_description;
 
@@ -79,4 +82,10 @@ pub enum PtcgRarity {
     TR,
     TD,
     Unknown,
+}
+
+impl PgHasArrayType for PtcgRarity {
+    fn array_type_info() -> sqlx::postgres::PgTypeInfo {
+        PgTypeInfo::with_name("_ptcg_rarity_enum")
+    }
 }

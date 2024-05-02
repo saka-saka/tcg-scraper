@@ -34,6 +34,7 @@ pub struct ThePTCGCard {
     pub set_code: Option<String>,
 }
 
+#[derive(Clone)]
 pub struct PtcgScraper {}
 
 impl PtcgScraper {

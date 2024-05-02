@@ -1,5 +1,5 @@
 mod one_piece;
-mod ptcg;
+pub mod ptcg;
 mod ptcg_jp;
 mod ws;
 mod yugioh;
@@ -10,8 +10,8 @@ use self::{one_piece::OnePiece, ptcg::Ptcg, ptcg_jp::PtcgJp, ws::Ws, yugioh::Yug
 use crate::{
     repository::Repository,
     scraper::{
-        one_piece::OnePieceScraper, ptcg::PtcgScraper, tcg_collector::TcgCollectorScraper,
-        ws::WsScraper, yugioh::YugiohScraper,
+        one_piece::OnePieceScraper, pokemon_wiki::PokemonWikiScraper, ptcg::PtcgScraper,
+        tcg_collector::TcgCollectorScraper, ws::WsScraper, yugioh::YugiohScraper,
     },
 };
 use std::{borrow::Cow, io::Write, path::Path};
@@ -68,14 +68,15 @@ pub struct Application {
 
 impl Application {
     pub fn new(url: &str) -> Self {
-        let repository = Repository::new(url);
+        let repository = Repository::from_dsn(url).unwrap();
         Self { repository }
     }
-    pub fn pokemon_trainer(&self) -> Ptcg {
+    pub fn ptcg(&self) -> Ptcg {
         let scraper = PtcgScraper::new();
         Ptcg {
             repository: self.repository.clone(),
             scraper,
+            wiki_scraper: PokemonWikiScraper::new(),
         }
     }
     pub fn one_piece(&self) -> OnePiece {
