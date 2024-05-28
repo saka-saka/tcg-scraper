@@ -1,0 +1,40 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT name, number, rarity::text, exp_code\n        FROM pokewiki\n        WHERE exp_code = LOWER($1)\n        ORDER BY number",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "number",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "rarity",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "exp_code",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      null,
+      false
+    ]
+  },
+  "hash": "c456171a367cd31ff54e080822e2fce81e06bfd42967503c086866b6733d92fd"
+}

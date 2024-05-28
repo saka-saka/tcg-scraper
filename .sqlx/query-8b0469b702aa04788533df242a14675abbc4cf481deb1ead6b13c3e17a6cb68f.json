@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT code FROM pokemon_trainer_printing",
+  "query": "SELECT code FROM pokemon_trainer_expansion",
   "describe": {
     "columns": [
       {
@@ -16,5 +16,5 @@
       false
     ]
   },
-  "hash": "35311fca87a611f0cea66e7185c612d5091ee96d0ead0a6be782e7469872b4c2"
+  "hash": "8b0469b702aa04788533df242a14675abbc4cf481deb1ead6b13c3e17a6cb68f"
 }
