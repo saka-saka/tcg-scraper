@@ -3,7 +3,7 @@ use crate::{
     error::Error,
     repository::Repository,
     scraper::{pokemon_wiki::PokemonWikiScraper, ptcg::PtcgScraper},
-    strategy::{PtcgStrategy, Source, TcgCollectorStrategy, WikiStrategy},
+    strategy::{ManualStrategy, PtcgStrategy, Source, TcgCollectorStrategy, WikiStrategy},
 };
 use futures::{StreamExt, TryStreamExt};
 use strum::IntoEnumIterator;
@@ -31,9 +31,10 @@ impl Ptcg {
                         .await?;
                     self.repository.upsert_pokewiki(cards).await?;
                 }
-                Source::TcgCollector(TcgCollectorStrategy::Pic(data)) => {}
-                Source::TcgCollector(TcgCollectorStrategy::PicByName(data)) => {}
-                Source::TcgCollector(TcgCollectorStrategy::PicMappings(data)) => {}
+                Source::TcgCollector(TcgCollectorStrategy::Pic(_data)) => {}
+                Source::TcgCollector(TcgCollectorStrategy::PicByName(_data)) => {}
+                Source::TcgCollector(TcgCollectorStrategy::PicMappings(_data)) => {}
+                Source::Manual(ManualStrategy::Data(_card_data)) => {}
             }
         }
         Ok(())
@@ -56,9 +57,12 @@ impl Ptcg {
         Ok(())
     }
     pub async fn prepare_ptcg_expansions(&self) -> Result<(), Error> {
-        let expansions = self.scraper.fetch_expansion().await?;
-        for exp in expansions {
-            self.repository.upsert_ptcg_expansion(&exp).await?;
+        let count = self.repository.find_ptcg_expansion().count().await;
+        if count == 0 {
+            let expansions = self.scraper.fetch_expansion().await?;
+            for exp in expansions {
+                self.repository.upsert_ptcg_expansion(&exp).await?;
+            }
         }
         Ok(())
     }
@@ -67,10 +71,13 @@ impl Ptcg {
         codes
             .map_err(Error::from)
             .try_for_each(|code| async move {
-                let fetchable_codes = self.scraper.get_fetchables_by_exp(&code).await?;
-                self.repository
-                    .upsert_fetchable(fetchable_codes, &code)
-                    .await?;
+                let count = self.repository.get_fetchable_by_code(&code).count().await;
+                if count == 0 {
+                    let fetchable_codes = self.scraper.get_fetchables_by_exp(&code).await?;
+                    self.repository
+                        .upsert_fetchable(fetchable_codes, &code)
+                        .await?;
+                }
                 Ok(())
             })
             .await?;

@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
 use scraper::Selector;
+use tracing::debug;
 
 use crate::{
     domain::PtcgRarity,
@@ -47,13 +48,13 @@ impl PokemonWikiScraper {
             let number = number.inner_trim();
             let name_selector = &Selector::parse("td:nth-child(2) a").unwrap();
             let name = tr.select(name_selector).next().unwrap().inner_trim();
-            let rarity_selector = &Selector::parse("td:nth-child(4) span b").unwrap();
+            let rarity_selector = &Selector::parse("td:nth-child(4) > span > b").unwrap();
             let rarity = tr
                 .select(rarity_selector)
                 .next()
-                .map(|elem| elem.inner_trim())
-                .unwrap_or("Unknown".to_string());
-            let rarity = PtcgRarity::from_str(&rarity).unwrap();
+                .map(|elem| elem.inner_trim());
+            let rarity = rarity.unwrap_or("Unknown".to_string());
+            let rarity = PtcgRarity::from_str(&rarity).unwrap_or(PtcgRarity::Unknown);
             let card = PokemonWikiCard {
                 number,
                 name,

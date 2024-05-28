@@ -5,9 +5,29 @@ use serde::Deserialize;
 #[derive(Deserialize, Debug)]
 #[serde(tag = "source", rename_all = "snake_case")]
 pub enum Source {
+    Manual(ManualStrategy),
     Ptcg(PtcgStrategy),
     Wiki(WikiStrategy),
     TcgCollector(TcgCollectorStrategy),
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum ManualStrategy {
+    Data(Data),
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
+pub struct Data {
+    card_data: Vec<CardData>,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
+pub struct CardData {
+    number: i32,
+    name: String,
 }
 
 #[derive(Deserialize, Debug)]

@@ -23,6 +23,16 @@ impl Repository {
         Ok(Self { pool })
     }
 
+    pub fn find_ptcg_expansion(&self) -> BoxStream<Result<PtcgExpansion, RepositoryError>> {
+        sqlx::query_as!(
+            PtcgExpansion,
+            "SELECT code, series, name, release_date FROM pokemon_trainer_expansion"
+        )
+        .fetch(&self.pool)
+        .map_err(RepositoryError::from)
+        .boxed()
+    }
+
     pub async fn upsert_pokewiki(
         &self,
         cards: Vec<PokemonWikiCard>,
@@ -219,12 +229,21 @@ impl Repository {
         sqlx::query!(
             "SELECT fetchable.code, fetchable.expansion_code
             FROM pokemon_trainer_fetchable_card fetchable
-            INNER JOIN pokemon_trainer_printing printing ON fetchable.code = printing.code
-            WHERE printing.name is NULL
+            WHERE fetched = false
             "
         )
         .fetch(&self.pool)
         .map_ok(|s| (s.code, s.expansion_code))
+        .map_err(RepositoryError::from)
+        .boxed()
+    }
+    pub fn get_fetchable_by_code(&self, code: &str) -> BoxStream<Result<String, RepositoryError>> {
+        sqlx::query!(
+            "SELECT code FROM pokemon_trainer_fetchable_card WHERE expansion_code = $1",
+            code
+        )
+        .fetch(&self.pool)
+        .map_ok(|s| s.code)
         .map_err(RepositoryError::from)
         .boxed()
     }
@@ -233,7 +252,7 @@ impl Repository {
             "
                    INSERT INTO pokemon_trainer_printing(code, kind, name, number, expansion_code)
                    VALUES($1, $2, $3, $4, $5)
-                   ON CONFLICT(code)
+                   ON CONFLICT(name, number, expansion_code)
                    DO UPDATE
                    SET kind = $2, name = $3, number = $4, expansion_code = $5
                    ",
@@ -362,7 +381,7 @@ impl Repository {
     }
 
     pub(crate) fn get_ptcg_codes(&self) -> BoxStream<Result<String, RepositoryError>> {
-        sqlx::query!("SELECT code FROM pokemon_trainer_printing")
+        sqlx::query!("SELECT code FROM pokemon_trainer_expansion")
             .fetch(&self.pool)
             .map_ok(|c| c.code)
             .map_err(|e| e.into())
