@@ -16,7 +16,7 @@ use serde::Deserialize;
 use sqlx::PgPool;
 use std::{thread::sleep, time::Duration};
 use strategy::Source;
-use tracing::{info, Level};
+use tracing::{debug, info, Level};
 
 use crate::handlers::{list, modal, pokemon, prepare, root, search, stylesheets, MyState};
 
@@ -108,9 +108,9 @@ async fn main() -> Result<()> {
             PtcgCommands::Prepare => {
                 let pokemon_trainer = application.ptcg();
                 pokemon_trainer.prepare_ptcg_expansions().await?;
-                pokemon_trainer.update_ptcg_fetchable().await?;
-                pokemon_trainer.update_ptcg_printing().await?;
-                pokemon_trainer.update_rarity().await?;
+                // pokemon_trainer.update_ptcg_fetchable().await?;
+                // pokemon_trainer.update_ptcg_printing().await?;
+                // pokemon_trainer.update_rarity().await?;
                 // pokemon_trainer.download_all_image().await?;
             }
             PtcgCommands::Run => {
@@ -121,13 +121,14 @@ async fn main() -> Result<()> {
                 let _all_cards = pokemon_trainer.export_pokemon_trainer().await?;
             }
             PtcgCommands::Strategy => {
+                debug!("strategy ...");
                 let stdin = std::io::stdin();
                 let mut rdr = csv::Reader::from_reader(stdin);
                 for result in rdr.deserialize() {
                     let record: PtcgExpansionDbRow = result?;
                     let ptcg = application.ptcg();
                     let sources: Vec<Source> = serde_json::from_str(&record.strategy)?;
-                    ptcg.from_expansion(sources).await?;
+                    ptcg.from_expansion(sources, record).await?;
                 }
             }
         },

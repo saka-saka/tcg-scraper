@@ -111,10 +111,20 @@ pub struct ListQuery {
 }
 pub async fn list(query: Query<ListQuery>, state: State<MyState>) -> Result<Markup, Error> {
     let cards = sqlx::query!(
-        "SELECT name, number, rarity::text, exp_code
-        FROM pokewiki
-        WHERE exp_code = LOWER($1)
-        ORDER BY number",
+        r#"
+        SELECT
+        	COALESCE(ptp.name, wiki.name) AS "name!",
+        	COALESCE(ptp.number, wiki.number) AS "number!",
+        	COALESCE(ptp.expansion_code, wiki.exp_code) "exp_code!",
+            COALESCE(ptp.rarity, wiki.rarity::TEXT) rarity
+        FROM pokemon_trainer_printing ptp
+        FULL JOIN pokewiki wiki
+            ON LOWER(wiki.exp_code) = LOWER(ptp.expansion_code)
+            AND wiki.name = ptp.name
+            AND wiki.number = ptp.number
+        WHERE
+        LOWER(ptp.expansion_code) = LOWER($1) OR wiki.exp_code = LOWER($1)
+        "#,
         query.code
     )
     .fetch_all(&state.pool)

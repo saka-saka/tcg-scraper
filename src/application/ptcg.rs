@@ -4,6 +4,7 @@ use crate::{
     repository::Repository,
     scraper::{pokemon_wiki::PokemonWikiScraper, ptcg::PtcgScraper},
     strategy::{ManualStrategy, PtcgStrategy, Source, TcgCollectorStrategy, WikiStrategy},
+    PtcgExpansionDbRow,
 };
 use futures::{StreamExt, TryStreamExt};
 use strum::IntoEnumIterator;
@@ -19,15 +20,42 @@ pub struct Ptcg {
 }
 
 impl Ptcg {
-    pub async fn from_expansion(&self, sources: Vec<Source>) -> Result<(), Error> {
+    pub async fn from_expansion(
+        &self,
+        sources: Vec<Source>,
+        record: PtcgExpansionDbRow,
+    ) -> Result<(), Error> {
         for source in sources {
             match source {
-                Source::Ptcg(PtcgStrategy::All) => {}
+                Source::Ptcg(PtcgStrategy::All) => {
+                    // let count = self
+                    //     .repository
+                    //     .get_fetchable_by_code(&record.exp)
+                    //     .count()
+                    //     .await;
+                    // if count == 0 {
+                    //     let fetchable_codes =
+                    //         self.scraper.get_fetchables_by_exp(&record.exp).await?;
+                    //     self.repository
+                    //         .upsert_fetchable(fetchable_codes, &record.exp)
+                    //         .await?;
+                    // }
+                    // let mut card = self
+                    //     .scraper
+                    //     .fetch_printing_detail(&format!(
+                    //         "https://asia.pokemon-card.com/tw/card-search/detail/{}/",
+                    //         record.exp
+                    //     ))
+                    //     .await?;
+                    // card.set_code = Some(record.exp.clone());
+                    // self.repository.upsert_the_ptcg_card(&card).await;
+                    // self.repository.fetched(&record.exp).await;
+                }
                 Source::Ptcg(PtcgStrategy::Pic) => {}
                 Source::Wiki(WikiStrategy::Data(data)) => {
                     let cards = self
                         .wiki_scraper
-                        .fetch_card_data_by_exp_url(&data.url().to_string())
+                        .fetch_card_data_by_exp_url(&data.url().to_string(), &record.exp)
                         .await?;
                     self.repository.upsert_pokewiki(cards).await?;
                 }
