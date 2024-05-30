@@ -113,9 +113,9 @@ pub async fn list(query: Query<ListQuery>, state: State<MyState>) -> Result<Mark
     let cards = sqlx::query!(
         r#"
         SELECT
-        	COALESCE(ptp.name, wiki.name) AS "name!",
-        	COALESCE(ptp.number, wiki.number) AS "number!",
-        	COALESCE(ptp.expansion_code, wiki.exp_code) "exp_code!",
+            COALESCE(ptp.name, wiki.name) AS "name!",
+            COALESCE(ptp.number, wiki.number) AS "number!",
+            COALESCE(ptp.expansion_code, wiki.exp_code) "exp_code!",
             COALESCE(ptp.rarity, wiki.rarity::TEXT) rarity
         FROM pokemon_trainer_printing ptp
         FULL JOIN pokewiki wiki

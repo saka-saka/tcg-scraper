@@ -16,7 +16,7 @@ use serde::Deserialize;
 use sqlx::PgPool;
 use std::{thread::sleep, time::Duration};
 use strategy::Source;
-use tracing::{debug, info, Level};
+use tracing::{debug, info};
 
 use crate::handlers::{list, modal, pokemon, prepare, root, search, stylesheets, MyState};
 
@@ -114,7 +114,7 @@ async fn main() -> Result<()> {
                 // pokemon_trainer.download_all_image().await?;
             }
             PtcgCommands::Run => {
-                let pokemon_trainer = application.ptcg();
+                // let pokemon_trainer = application.ptcg();
             }
             PtcgCommands::ExportCsv => {
                 let pokemon_trainer = application.ptcg();
