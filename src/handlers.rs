@@ -123,7 +123,8 @@ pub async fn list(query: Query<ListQuery>, state: State<MyState>) -> Result<Mark
             AND wiki.name = ptp.name
             AND wiki.number = ptp.number
         WHERE
-        LOWER(ptp.expansion_code) = LOWER($1) OR LOWER(wiki.exp_code) = LOWER($1)
+            LOWER(ptp.expansion_code) = LOWER($1) OR LOWER(wiki.exp_code) = LOWER($1)
+        ORDER BY "number!"
         "#,
         query.code
     )
