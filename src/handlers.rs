@@ -95,7 +95,7 @@ pub async fn pokemon() -> Result<Markup, Error> {
                     .large.title {}
                     #list {}
                 }
-                section.flex.row.wrap.quater.screen-v-scroll hx-get="/explist" hx-trigger="load" hx-target="#explist" {
+                section.flex.row.wrap.quater.screen-v-scroll.noselect hx-get="/explist" hx-trigger="load" hx-target="#explist" {
                     #explist {}
                 }
             }
