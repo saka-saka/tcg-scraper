@@ -49,8 +49,9 @@ impl Repository {
         sqlx::query!(
             "
     INSERT INTO pokewiki(number, name, exp_code, rarity)
-    SELECT *
-    FROM UNNEST($1::TEXT[], $2::TEXT[], $3::TEXT[], $4::ptcg_rarity_enum[])
+    SELECT * FROM UNNEST($1::TEXT[], $2::TEXT[], $3::TEXT[], $4::ptcg_rarity_enum[])
+    ON CONFLICT (number, name, rarity, exp_code)
+    DO NOTHING
     ",
             &unzipped.0,
             &unzipped.1,

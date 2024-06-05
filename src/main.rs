@@ -108,9 +108,9 @@ async fn main() -> Result<()> {
             PtcgCommands::Prepare => {
                 let pokemon_trainer = application.ptcg();
                 pokemon_trainer.prepare_ptcg_expansions().await?;
-                // pokemon_trainer.update_ptcg_fetchable().await?;
-                // pokemon_trainer.update_ptcg_printing().await?;
-                // pokemon_trainer.update_rarity().await?;
+                pokemon_trainer.update_ptcg_fetchable().await?;
+                pokemon_trainer.update_ptcg_printing().await?;
+                pokemon_trainer.update_rarity().await?;
                 // pokemon_trainer.download_all_image().await?;
             }
             PtcgCommands::Run => {
