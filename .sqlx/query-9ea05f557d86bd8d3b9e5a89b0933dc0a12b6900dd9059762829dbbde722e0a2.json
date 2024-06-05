@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n    INSERT INTO pokewiki(number, name, exp_code, rarity)\n    SELECT *\n    FROM UNNEST($1::TEXT[], $2::TEXT[], $3::TEXT[], $4::ptcg_rarity_enum[])\n    ",
+  "query": "\n    INSERT INTO pokewiki(number, name, exp_code, rarity)\n    SELECT * FROM UNNEST($1::TEXT[], $2::TEXT[], $3::TEXT[], $4::ptcg_rarity_enum[])\n    ON CONFLICT (number, name, rarity, exp_code)\n    DO NOTHING\n    ",
   "describe": {
     "columns": [],
     "parameters": {
@@ -50,5 +50,5 @@
     },
     "nullable": []
   },
-  "hash": "dcf24f0f5f02a70682f8069c12227a2d2dcb331f19ba3ec3f085fe38b0d6efe7"
+  "hash": "9ea05f557d86bd8d3b9e5a89b0933dc0a12b6900dd9059762829dbbde722e0a2"
 }
