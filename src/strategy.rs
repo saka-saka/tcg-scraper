@@ -26,7 +26,7 @@ pub struct Data {
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
 pub struct CardData {
-    number: i32,
+    number: String,
     name: String,
 }
 
