@@ -11,6 +11,7 @@ use application::Application;
 use axum::{routing::get, Router};
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::Result;
+use handlers::exp_list;
 use meilisearch_sdk::Client;
 use serde::Deserialize;
 use sqlx::PgPool;
@@ -231,6 +232,7 @@ async fn main() -> Result<()> {
                 .route("/pokemon", get(pokemon))
                 .route("/modal", get(modal))
                 .route("/list", get(list))
+                .route("/explist", get(exp_list))
                 .route("/prepare", get(prepare))
                 .route("/stylesheets.css", get(stylesheets))
                 .with_state(state);
