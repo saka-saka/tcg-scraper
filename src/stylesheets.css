@@ -149,6 +149,10 @@ body {
     user-select: none;
 }
 
+.table_img {
+	height: var(--line);
+}
+
 a {
   color: var(--c-current);
   text-decoration: none;

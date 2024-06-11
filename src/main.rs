@@ -12,7 +12,7 @@ use axum::{routing::get, Router};
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::Result;
 use handlers::exp_list;
-use meilisearch_sdk::Client;
+use meilisearch_sdk::client::Client;
 use serde::Deserialize;
 use sqlx::PgPool;
 use std::{thread::sleep, time::Duration};
@@ -219,7 +219,7 @@ async fn main() -> Result<()> {
         Commands::Serve(ServeCommands::Ptcg) => {
             let meilisearch_url = std::env::var("MEILISEARCH_URL")?;
             let meilisearch_api_key = std::env::var("MEILISEARCH_API_KEY")?;
-            let client = Client::new(meilisearch_url, Some(meilisearch_api_key));
+            let client = Client::new(meilisearch_url, Some(meilisearch_api_key))?;
             let pool = PgPool::connect(&std::env::var("DATABASE_URL")?).await?;
             let state = MyState {
                 pool,

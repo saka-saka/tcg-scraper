@@ -1,9 +1,11 @@
+use std::fmt::Display;
+
 use axum::{
     extract::{Query, State},
     response::IntoResponse,
 };
 use maud::{html, Markup, DOCTYPE};
-use meilisearch_sdk::Client;
+use meilisearch_sdk::client::Client;
 use reqwest::{header::CONTENT_TYPE, StatusCode};
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
@@ -114,7 +116,8 @@ pub async fn list(query: Query<ListQuery>, state: State<MyState>) -> Result<Mark
             COALESCE(ptp.name, wiki.name) AS "name!",
             COALESCE(ptp.number, wiki.number) AS "number!",
             COALESCE(ptp.expansion_code, wiki.exp_code) "exp_code!",
-            COALESCE(ptp.rarity, wiki.rarity::TEXT) rarity
+            COALESCE(ptp.rarity, wiki.rarity::TEXT) rarity,
+            ptp.code as "code?"
         FROM pokemon_trainer_printing ptp
         FULL JOIN pokewiki wiki
             ON LOWER(wiki.exp_code) = LOWER(ptp.expansion_code)
@@ -129,9 +132,11 @@ pub async fn list(query: Query<ListQuery>, state: State<MyState>) -> Result<Mark
     .fetch_all(&state.pool)
     .await?;
     let markup = html! {
+        h1 { (query.code) }
         table #list {
             @for card in cards {
-                tr hx-get={ (format!("/modal?code={}", card.name)) } hx-target="body" hx-swap="beforeend" {
+                tr hx-get={ (format!("/modal?name={}&number={}&exp_code={}", card.name, card.number, card.exp_code)) } hx-target="body" hx-swap="beforeend" {
+                    td { img.table_img src={(format!("https://asia.pokemon-card.com/tw/card-img/tw{:08}.png", card.code.unwrap_or("0".to_string()).parse::<i32>().unwrap()))}; }
                     td { (card.name) }
                     td { (card.number) }
                     td { (card.rarity.unwrap_or("Unknown".to_string())) }
@@ -150,7 +155,7 @@ pub async fn exp_list(state: State<MyState>) -> Result<Markup, Error> {
     let markup = html! {
         .pad {
             @for exp in exps {
-                a.green href="#" hx-get={ (format!("/list?code={}", exp.code)) } hx-target="#list" {
+                a.green href="#" _="on click take .selected from a.green for the event's target" hx-get={ (format!("/list?code={}", exp.code)) } hx-target="#list" {
                     (format!("{:<5}:{}",exp.code, exp.name))
                 }
                 br;
@@ -162,30 +167,52 @@ pub async fn exp_list(state: State<MyState>) -> Result<Markup, Error> {
 
 #[derive(Deserialize)]
 pub struct ModalQuery {
-    code: String,
+    name: String,
+    number: String,
+    exp_code: String,
 }
 
 pub async fn modal(state: State<MyState>, query: Query<ModalQuery>) -> Result<Markup, Error> {
     let card = sqlx::query!(
-        "SELECT code, name, kind, number, rarity, expansion_code from pokemon_trainer_printing WHERE code = $1", query.code
+        r#"
+        SELECT
+            COALESCE(ptp.name, wiki.name) AS "name!",
+            COALESCE(ptp.number, wiki.number) AS "number!",
+            COALESCE(ptp.expansion_code, wiki.exp_code) "exp_code!",
+            COALESCE(ptp.rarity, wiki.rarity::TEXT) rarity
+        FROM pokemon_trainer_printing ptp
+        FULL JOIN pokewiki wiki
+            ON LOWER(wiki.exp_code) = LOWER(ptp.expansion_code)
+            AND wiki.name = ptp.name
+            AND wiki.number = ptp.number
+        WHERE
+            (LOWER(ptp.expansion_code) = LOWER($1) OR LOWER(wiki.exp_code) = LOWER($1))
+            AND
+            (ptp.name = $2 OR wiki.name = $2)
+            AND
+            (ptp.number = $3 OR wiki.number = $3)
+        "#,
+        query.exp_code,
+        query.name,
+        query.number
     )
     .fetch_one(&state.pool)
     .await?;
+
     let (n, setsize) = card.number.split_once('/').unwrap();
     Ok(html! {
         #modal _="on closeModal add .closing then wait for animationend then remove me" {
             .modal-underlay _="on click trigger closeModal" {}
             .modal-content {
                 h1 { "hihi" }
-                div { (card.code) }
                 div { (card.name) }
-                div { (card.rarity.unwrap()) }
+                div { (card.rarity.unwrap_or("Unknown".to_string())) }
                 div {
                     input value={(n)};
                     "/"
                     (setsize)
                 }
-                div { (card.expansion_code) }
+                div { (card.exp_code) }
                 button _="on click trigger closeModal" { "close" }
                 button _="on click trigger closeModal" { "duplicate" }
             }
@@ -208,7 +235,7 @@ pub enum Error {
     #[error("sqlx error {0}")]
     SQLx(#[from] sqlx::Error),
     #[error("meilisearch error {0}")]
-    Meilisearch(#[from] meilisearch_sdk::Error),
+    Meilisearch(#[from] meilisearch_sdk::errors::Error),
 }
 
 impl IntoResponse for Error {
