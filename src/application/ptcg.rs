@@ -20,7 +20,7 @@ pub struct Ptcg {
 }
 
 impl Ptcg {
-    pub async fn from_expansion(
+    pub async fn expansion(
         &self,
         sources: Vec<Source>,
         record: PtcgExpansionDbRow,
@@ -55,7 +55,7 @@ impl Ptcg {
                 Source::Wiki(WikiStrategy::Data(data)) => {
                     let cards = self
                         .wiki_scraper
-                        .fetch_card_data_by_exp_url(&data.url().to_string(), &record.exp)
+                        .fetch_card_data_by_exp_url(data.url().as_str(), &record.exp)
                         .await?;
                     self.repository.upsert_pokewiki(cards).await?;
                 }

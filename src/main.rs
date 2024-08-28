@@ -129,7 +129,7 @@ async fn main() -> Result<()> {
                     let record: PtcgExpansionDbRow = result?;
                     let ptcg = application.ptcg();
                     let sources: Vec<Source> = serde_json::from_str(&record.strategy)?;
-                    ptcg.from_expansion(sources, record).await?;
+                    ptcg.expansion(sources, record).await?;
                 }
             }
         },

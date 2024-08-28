@@ -78,8 +78,7 @@ impl OnePieceScraper {
         let set_name_selector = &Selector::parse("#series option").unwrap();
         let set_name = document
             .select(set_name_selector)
-            .skip_while(|e| e.value().attr("selected").is_none())
-            .next()
+            .find(|e| e.value().attr("selected").is_some())
             .unwrap()
             .inner_html();
         let dls_selector = Selector::parse("div.resultCol dl").unwrap();

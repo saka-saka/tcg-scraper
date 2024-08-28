@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 use axum::{
     extract::{Query, State},
     response::IntoResponse,

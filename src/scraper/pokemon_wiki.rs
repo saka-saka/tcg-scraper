@@ -46,7 +46,7 @@ impl PokemonWikiScraper {
             let rarity_selector_img =
                 &Selector::parse("td:nth-child(4) span.explain > img").unwrap();
             let rarity = tr.select(rarity_selector_img).next();
-            let rarity = if let Some(_) = rarity {
+            let rarity = if rarity.is_some() {
                 PtcgRarity::A
             } else {
                 let rarity_selector = &Selector::parse("td:nth-child(4) span.explain > b").unwrap();
