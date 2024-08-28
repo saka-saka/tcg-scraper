@@ -4,7 +4,7 @@ use crate::{
     repository::Repository,
     scraper::{pokemon_wiki::PokemonWikiScraper, ptcg::PtcgScraper},
     strategy::{ManualStrategy, PtcgStrategy, Source, TcgCollectorStrategy, WikiStrategy},
-    PtcgExpansionDbRow,
+    PtcgStrategyRow,
 };
 use futures::{StreamExt, TryStreamExt};
 use strum::IntoEnumIterator;
@@ -20,10 +20,10 @@ pub struct Ptcg {
 }
 
 impl Ptcg {
-    pub async fn expansion(
+    pub async fn strategy_analyze(
         &self,
         sources: Vec<Source>,
-        record: PtcgExpansionDbRow,
+        record: PtcgStrategyRow,
     ) -> Result<(), Error> {
         for source in sources {
             match source {

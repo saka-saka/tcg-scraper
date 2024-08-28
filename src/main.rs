@@ -17,7 +17,7 @@ use serde::Deserialize;
 use sqlx::PgPool;
 use std::{thread::sleep, time::Duration};
 use strategy::Source;
-use tracing::{debug, info};
+use tracing::info;
 
 use crate::handlers::{list, modal, pokemon, prepare, root, search, stylesheets, MyState};
 
@@ -90,7 +90,7 @@ enum OnePieceCommands {
 }
 
 #[derive(Deserialize, Debug)]
-struct PtcgExpansionDbRow {
+struct PtcgStrategyRow {
     exp: String,
     name: String,
     strategy: String,
@@ -122,14 +122,13 @@ async fn main() -> Result<()> {
                 let _all_cards = pokemon_trainer.export_pokemon_trainer().await?;
             }
             PtcgCommands::Strategy => {
-                debug!("strategy ...");
                 let stdin = std::io::stdin();
                 let mut rdr = csv::Reader::from_reader(stdin);
                 for result in rdr.deserialize() {
-                    let record: PtcgExpansionDbRow = result?;
+                    let record: PtcgStrategyRow = result?;
                     let ptcg = application.ptcg();
                     let sources: Vec<Source> = serde_json::from_str(&record.strategy)?;
-                    ptcg.expansion(sources, record).await?;
+                    ptcg.strategy_analyze(sources, record).await?;
                 }
             }
         },
