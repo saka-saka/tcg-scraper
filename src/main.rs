@@ -11,6 +11,7 @@ use application::Application;
 use axum::{routing::get, Router};
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::Result;
+use export::export_csv::ExportCsv;
 use handlers::exp_list;
 use meilisearch_sdk::client::Client;
 use serde::Deserialize;
@@ -118,8 +119,14 @@ async fn main() -> Result<()> {
                 // let pokemon_trainer = application.ptcg();
             }
             PtcgCommands::ExportCsv => {
+                let mut wtr = csv::Writer::from_writer(std::io::stdout());
                 let pokemon_trainer = application.ptcg();
-                let _all_cards = pokemon_trainer.export_pokemon_trainer().await?;
+                let all_cards = pokemon_trainer.export_pokemon_trainer().await?;
+                for card in all_cards {
+                    let p: ExportCsv = card.into();
+                    wtr.serialize(p).unwrap();
+                }
+                wtr.flush().unwrap();
             }
             PtcgCommands::Strategy => {
                 let stdin = std::io::stdin();
