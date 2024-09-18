@@ -46,11 +46,11 @@ impl PtcgJp {
             .get_tc_details()
             .map_err(Error::from)
             .try_for_each(|d| async move {
-                if !self.repository.ptcg_tw_is_exists(&d).await? {
+                if !self.repository.pokemon().ptcg_tw_is_exists(&d).await? {
                     let card = self.scraper.fetch_card_detail(d).await?;
                     dbg!(&card);
                     // self.repository.save_ptcg_jp_cards(vec![card]).await?;
-                    self.repository.save_extra(card).await?;
+                    self.repository.pokemon().save_extra(card).await?;
                 }
                 Ok(())
             })
