@@ -381,8 +381,16 @@ impl Repository {
         Ok(printings)
     }
 
-    pub(crate) fn get_ptcg_codes(&self) -> BoxStream<Result<String, RepositoryError>> {
+    pub(crate) fn get_ptcg_exp_codes(&self) -> BoxStream<Result<String, RepositoryError>> {
         sqlx::query!("SELECT code FROM pokemon_trainer_expansion")
+            .fetch(&self.pool)
+            .map_ok(|c| c.code)
+            .map_err(|e| e.into())
+            .boxed()
+    }
+
+    pub(crate) fn get_ptcg_card_codes(&self) -> BoxStream<Result<String, RepositoryError>> {
+        sqlx::query!("SELECT code FROM pokemon_trainer_printing")
             .fetch(&self.pool)
             .map_ok(|c| c.code)
             .map_err(|e| e.into())

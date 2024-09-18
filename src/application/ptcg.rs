@@ -68,10 +68,11 @@ impl Ptcg {
         Ok(())
     }
     pub async fn download_all_image(&self) -> Result<(), Error> {
-        let codes = self.repository.get_ptcg_codes();
+        let codes = self.repository.get_ptcg_card_codes();
         codes
             .map_err(Error::from)
             .try_for_each(|code| async move {
+                dbg!(&code);
                 let code: i32 = code.parse().unwrap();
                 let image_url = format!(
                     "https://asia.pokemon-card.com/tw/card-img/tw{:08}.png",
@@ -95,7 +96,7 @@ impl Ptcg {
         Ok(())
     }
     pub async fn update_ptcg_fetchable(&self) -> Result<(), Error> {
-        let codes = self.repository.get_ptcg_codes();
+        let codes = self.repository.get_ptcg_exp_codes();
         codes
             .map_err(Error::from)
             .try_for_each(|code| async move {
