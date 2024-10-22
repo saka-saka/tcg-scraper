@@ -91,9 +91,9 @@ pub async fn pokemon() -> Result<Markup, Error> {
         #sapper {
             .flex {
                 section.flex.row.wrap.quater {}
-                section.flex.row.wrap.half.screen-v-scroll.py {
+                section.flex.row.wrap.half.screen-v-scroll {
                     .large.title {}
-                    #list {}
+                    .full #list {}
                 }
                 section.flex.row.wrap.quater.screen-v-scroll.noselect hx-get="/explist" hx-trigger="load" hx-target="#explist" {
                     #explist {}
@@ -131,15 +131,13 @@ pub async fn list(query: Query<ListQuery>, state: State<MyState>) -> Result<Mark
     .await?;
     let markup = html! {
         h1 { (query.code) }
-        table #list {
-            @for card in cards {
-                tr hx-get={ (format!("/modal?name={}&number={}&exp_code={}", card.name, card.number, card.exp_code)) } hx-target="body" hx-swap="beforeend" {
-                    td { img.table_img src={(format!("https://asia.pokemon-card.com/tw/card-img/tw{:08}.png", card.code.unwrap_or("0".to_string()).parse::<i32>().unwrap()))}; }
-                    td { (card.name) }
-                    td { (card.number) }
-                    td { (card.rarity.unwrap_or("Unknown".to_string())) }
-                    td { (card.exp_code) }
-                }
+        @for card in cards {
+            div.flex hx-get={ (format!("/modal?name={}&number={}&exp_code={}", card.name, card.number, card.exp_code)) } hx-target="body" hx-swap="beforeend" {
+                div.width-ten { img.table_img src={(format!("https://asia.pokemon-card.com/tw/card-img/tw{:08}.png", card.code.unwrap_or("0".to_string()).parse::<i32>().unwrap()))}; }
+                div.quater { (card.name) }
+                div.quater { (card.number) }
+                div.width-ten { (card.rarity.unwrap_or("Unknown".to_string())) }
+                div.width-ten { (card.exp_code) }
             }
         }
     };

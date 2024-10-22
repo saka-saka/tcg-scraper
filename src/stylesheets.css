@@ -110,6 +110,10 @@ body {
   width: 50%;
 }
 
+.width-ten {
+  width: 10%;
+}
+
 .pad {
   padding: var(--line);
 }
@@ -264,6 +268,10 @@ td {
 	0% {transform: scale(1);}
 	100% {transform: scale(0.9);}
 } 
+
+.row {
+	display: flex;
+}
 
 .screen-v-scroll {
     height: 100vh;
